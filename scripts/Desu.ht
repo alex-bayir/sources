@@ -1,0 +1,133 @@
+import 'imports.ht' // importing classes an functions
+//classes:
+//  Document,Element : for parse HTML
+//functions:
+//  load : network get(url,headers)
+//  decode: json.decode(json)
+//  gsub,match,find: regexp
+//  url: url(endpoint,params) -> string
+
+final version="1.0"
+final domains=["desu.me","desu.win"]
+var domain=domains[1]
+final source="Desu"
+final types="Manga/Manhwa"
+final description="Один из лучших каталогов манги. Хорош тем, что на сайте быстро заливают новые главы."
+fun host()=>'https://${domain}';
+fun icon()=>'${host()}/favicon.ico';
+final auth_tokens={"xf_user":null,"xf_session":null};
+
+
+final filters_map={
+    "Sorts":{'По популярности':'popular', 'По добавлению':'id', 'По алфавиту':'name', 'По обновлениям':'updated'},
+    "Genres":{'Безумие':'dementia','Боевые искусства':'martial arts','В цвете':'color','Вампиры':'vampire','Веб':'web','Гарем':'harem','Героическое фэнтези':'heroic fantasy','Демоны':'demons','Детектив':'mystery','Дзёсей':'josei','Драма':'drama','Ёнкома':'yonkoma','Игры':'game','Исекай':'isekai','Исторический':'historical','Комедия':'comedy','Космос':'space','ЛитRPG':'litrpg','Магия':'magic','Меха':'mecha','Мистика':'mystic','Музыка':'music','Научная фантастика':'sci-fi','Пародия':'parody','Повседневность':'slice of life','Постапокалиптика':'post apocalyptic','Приключения':'adventure','Психологическое':'psychological','Романтика':'romance','Самураи':'samurai','Сверхъестественное':'supernatural','Сёдзе':'shoujo','Сёдзе Ай':'shoujo ai','Сейнен':'seinen','Сёнен':'shounen','Сёнен Ай':'shounen ai','Смена пола':'gender bender','Спорт':'sports','Супер сила':'super power','Трагедия':'tragedy','Триллер':'thriller','Ужасы':'horror','Фантастика':'fiction','Фэнтези':'fantasy','Хентай':'hentai','Школа':'school','Экшен':'action','Этти':'ecchi','Юри':'yuri','Яой':'yaoi'}
+};
+
+fun update(url:str) async {
+    url=gsub(url,'https?:[\\/][\\/][^\\/]+',host())
+    var response=await load(url)
+    if(response['status']==200){
+        var json=decode(response['body'])['response']
+        return {
+            'id':json['id'],
+            'url':url,
+            'web':json['url'],
+            'type':json['kind'],
+            'names':[json['name'],json['russian']],
+            'genres':json['genres'].map((genre)=>genre['russian']),
+            'rating':json['score']/2,
+            'status':status(json['status']),
+            'description':json['description'],
+            'cover':json['image']?['original'],
+            'chapters':json['chapters']['list'].reversed.map((chapter)=>{
+                'id':chapter['id'],
+                'vol':chapter['vol'],
+                'num':chapter['ch'],
+                'name':chapter['title'],
+                'date':chapter['date']*1000
+            })
+        };
+    }else{
+        log(encode(response));
+        return null;
+    }
+}
+
+fun query(name,page,filters) async {
+    var url_params={'search':name,'page':(page??0)+1,'limit':100}
+    if(filters!=null){
+        var empty=(string)=>string==null || string=='' ? null:string;
+        url_params['Sort']=empty(filters['Sort']['selected']);
+        url_params['Genres']=empty(filters['Genres']['selected']?.join(','));
+    }
+    return await query_url(url('${host()}/manga/api/',url_params),null);
+}
+
+fun query_url(url,page) async {
+    if(page!=null){url=url(url,{'page':(page??0)+1})}
+    url=raw(url);
+    log(url);
+    var response=await load(url);
+    if(response['status']==200){
+        return decode(response['body'])['response'].map((json)=>{
+                'id':json['id'],
+                'url':'${host()}/manga/api/${json['id']}',
+                'web':json['url'],
+                'type':json['kind'],
+                'names':[json['name'],json['russian']],
+                'genres':json['genres'].split(', '),
+                'rating':json['score']/2,
+                'status':status(json['status']),
+                'description':json['description'],
+                'cover':json['image']?['original']
+            }).toList()
+    }else{
+        log(encode(response));
+        return null;
+    }
+}
+
+fun pages(url,chapter) async {
+    var response=await load("${url}/chapter/${chapter['id']}");
+    return response['status']==200 ? decode(response['body'])['response']['pages']['list'].map((page)=>{'page':page['page'],'data':page['img']}).toList() : null;
+}
+
+fun download(file,url,headers,progress) async {
+    return await downloadTo(file,url,headers,progress);
+}
+
+fun filters() => {
+    'Sort':{
+        'title':'Сортировка',
+        'mode':'single',
+        'values': filters_map['Sorts']
+    },
+    'Genres':{
+        'title':'Жанры',
+        'mode':'double',
+        'values':filters_map['Genres']
+    }
+}
+
+fun similar(book) async {
+    var response=await load(book['web'])
+    if(response['status']==200){
+        return Document.parse(response['body'])
+            .selectAll('article.c-anime')
+            .map((e)=>e.select('img'))
+            .map((e)=>{
+                'id':match(e.attributes['src'],'\\d+'),
+                'url':"${host()}/manga/api/${match(e.attributes['src'],'\\d+')}",
+                'web':"${host()}/manga/${match(e.attributes['src'],'\\d+')}",
+                'names':[match(e.attributes['title'],'(.+) \\('),match(e.attributes['alt'],' \\((.+)\\)')],
+                'cover':"${host()}${e.attributes['src']}"
+            }).toList();
+    }else{
+        log(encode(response));
+        return null;
+    }
+}
+
+fun status(status){
+    return {'released':'Ongoing','ongoing':'Ongoing','continued':'Ongoing','Заморожен':'Stopped','completed':'Finished'}[status]
+}
