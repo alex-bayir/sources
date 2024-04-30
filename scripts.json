@@ -1,0 +1,38 @@
+{
+    "Desu":{
+        "name":"Desu",
+        "ico":"https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&size=24&url=http://desu.me",
+        "status":"ok",
+        "types":["Manga","Manhwa"],
+        "languages":["Ru"],
+        "source":"https://desu.me",
+        "url":"https://github.com/alex-bayir/sources/blob/main/scripts/Desu.ht"
+    },
+    "Remanga":{
+        "name":"Remanga",
+        "ico":"https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&size=24&url=http://remanga.org",
+        "status":"in work",
+        "types":["Manga","Manhwa"],
+        "languages":["Ru"],
+        "source":"https://remanga.org",
+        "url":"https://github.com/alex-bayir/sources/blob/main/scripts/Remanga.ht"
+    },
+    "MangaLib":{
+        "name":"MangaLib",
+        "ico":"https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&size=24&url=http://mangalib.me",
+        "status":"ok",
+        "types":["Manga","Manhwa"],
+        "languages":["Ru"],
+        "source":"https://mangalib.me",
+        "url":"https://github.com/alex-bayir/sources/blob/main/scripts/MangaLib.ht"
+    },
+    "HentaiLib":{
+        "name":"HentaiLib",
+        "ico":"https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&size=24&url=http://v1.hentailib.org",
+        "status":"ok",
+        "types":["Manga","Manhwa"],
+        "languages":["Ru"],
+        "source":"https://v1.hentailib.org",
+        "url":"https://github.com/alex-bayir/sources/blob/main/scripts/HentaiLib.ht"
+    }
+}
