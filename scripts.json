@@ -6,7 +6,8 @@
         "types":["Manga","Manhwa"],
         "languages":["Ru"],
         "source":"https://desu.me",
-        "url":"https://raw.githubusercontent.com/alex-bayir/sources/main/scripts/Desu.ht"
+        "url":"https://raw.githubusercontent.com/alex-bayir/sources/main/scripts/Desu.ht",
+        "adult":"16+"
     },
     {
         "name":"Remanga",
@@ -15,7 +16,8 @@
         "types":["Manga","Manhwa"],
         "languages":["Ru"],
         "source":"https://remanga.org",
-        "url":"https://raw.githubusercontent.com/alex-bayir/sources/main/scripts/Remanga.ht"
+        "url":"https://raw.githubusercontent.com/alex-bayir/sources/main/scripts/Remanga.ht",
+        "policy":"12+"
     },
     {
         "name":"MangaLib",
@@ -24,7 +26,8 @@
         "types":["Manga","Manhwa"],
         "languages":["Ru"],
         "source":"https://mangalib.me",
-        "url":"https://raw.githubusercontent.com/alex-bayir/sources/main/scripts/MangaLib.ht"
+        "url":"https://raw.githubusercontent.com/alex-bayir/sources/main/scripts/MangaLib.ht",
+        "policy":"12+"
     },
     {
         "name":"HentaiLib",
@@ -33,6 +36,7 @@
         "types":["Manga","Manhwa"],
         "languages":["Ru"],
         "source":"https://v1.hentailib.org",
-        "url":"https://raw.githubusercontent.com/alex-bayir/sources/main/scripts/HentaiLib.ht"
+        "url":"https://raw.githubusercontent.com/alex-bayir/sources/main/scripts/HentaiLib.ht",
+        "policy":"18+"
     }
 ]
