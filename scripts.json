@@ -1,7 +1,7 @@
 [
     {
         "name":"Desu",
-        "ico":"https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&size=24&url=http://desu.me",
+        "ico":"https://desu.me/favicon.ico",
         "status":"ok",
         "types":["Manga","Manhwa"],
         "languages":["Ru"],
@@ -10,7 +10,7 @@
     },
     {
         "name":"Remanga",
-        "ico":"https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&size=24&url=http://remanga.org",
+        "ico":"https://remanga.org/icons/favicon.ico",
         "status":"in work",
         "types":["Manga","Manhwa"],
         "languages":["Ru"],
@@ -19,7 +19,7 @@
     },
     {
         "name":"MangaLib",
-        "ico":"https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&size=24&url=http://mangalib.me",
+        "ico":"http://mangalib.me/icons/icon-192x192.png",
         "status":"ok",
         "types":["Manga","Manhwa"],
         "languages":["Ru"],
@@ -28,7 +28,7 @@
     },
     {
         "name":"HentaiLib",
-        "ico":"https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&size=24&url=http://v1.hentailib.org",
+        "ico":"http://v1.hentailib.org/icons/icon-192x192.png",
         "status":"ok",
         "types":["Manga","Manhwa"],
         "languages":["Ru"],
