@@ -4,7 +4,7 @@
         "ico":"https://desu.me/favicon.ico",
         "status":"ok",
         "types":["Manga","Manhwa"],
-        "languages":["Ru"],
+        "languages":["RU"],
         "source":"https://desu.me",
         "url":"https://raw.githubusercontent.com/alex-bayir/sources/main/scripts/Desu.ht",
         "policy":"16+"
@@ -14,7 +14,7 @@
         "ico":"https://remanga.org/icons/favicon.ico",
         "status":"in work",
         "types":["Manga","Manhwa"],
-        "languages":["Ru"],
+        "languages":["RU"],
         "source":"https://remanga.org",
         "url":"https://raw.githubusercontent.com/alex-bayir/sources/main/scripts/Remanga.ht",
         "policy":"12+"
@@ -24,7 +24,7 @@
         "ico":"http://mangalib.me/icons/icon-192x192.png",
         "status":"ok",
         "types":["Manga","Manhwa"],
-        "languages":["Ru"],
+        "languages":["RU"],
         "source":"https://mangalib.me",
         "url":"https://raw.githubusercontent.com/alex-bayir/sources/main/scripts/MangaLib.ht",
         "policy":"12+"
@@ -34,7 +34,7 @@
         "ico":"http://v1.hentailib.org/icons/icon-192x192.png",
         "status":"ok",
         "types":["Manga","Manhwa"],
-        "languages":["Ru"],
+        "languages":["RU"],
         "source":"https://v1.hentailib.org",
         "url":"https://raw.githubusercontent.com/alex-bayir/sources/main/scripts/HentaiLib.ht",
         "policy":"18+"
