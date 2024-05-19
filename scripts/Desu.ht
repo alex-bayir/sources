@@ -9,7 +9,7 @@ import 'imports.ht' // importing classes an functions
 
 final version="1.0"
 final domains=["desu.me","desu.win"]
-var domain=domains[1]
+var domain=domains[0]
 final source="Desu"
 final types="Manga/Manhwa"
 final description="Один из лучших каталогов манги. Хорош тем, что на сайте быстро заливают новые главы."

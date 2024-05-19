@@ -7,7 +7,7 @@ final source='HentaiLib';
 final types='Manga/Manhwa';
 final description='Один из самых популярных источников манги в СНГ.';
 fun host()=>'https://${domain}';
-fun icon()=>'${host()}/icons/icon-192x192.png';
+fun icon()=>'${host()}/images/logo/hl/icon-180.png';
 final auth_tokens={'cf_clearance':null,'mangalib_session':null,'XSRF-TOKEN':'X-Xsrf-Token'};
 
 final filters_map={
@@ -274,7 +274,7 @@ fun status(status:str) => {'3':'Announce','1':'Ongoing','4':'Paused','5':'Stoppe
 fun fix_url(url:str) => url?.startsWith('http') ?? true ? url : host()+url;
 fun safe_params(uri:str,params)=>raw(url(uri,params));
 if(filters_map.length==2){
-    load('${host()}/manga-list').then((response){
+    load('${host()}/ru/catalog').then((response){
         if(response['status']==200){
             var doc=Document.parse(response['body']);
             var json=decode(match(doc.select('#main-page > div > div > script').text,'window.__DATA = ({.*});'))['filters'];
