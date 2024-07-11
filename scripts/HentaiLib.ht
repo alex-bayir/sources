@@ -7,64 +7,71 @@ final source='HentaiLib';
 final types='Manga/Manhwa';
 final description='Один из самых популярных источников манги в СНГ.';
 fun host()=>'https://${domain}';
-fun icon()=>'${host()}/images/logo/hl/icon-180.png';
-final auth_tokens={'cf_clearance':null,'mangalib_session':null,'XSRF-TOKEN':'X-Xsrf-Token'};
+fun api()=>'https://api.lib.social';
+fun icon()=>'${host()}/images/logo/hl/favicon.ico';
+final auth_tokens={'cf_clearance':null,'mangalib_session':null,'XSRF-TOKEN':'X-Xsrf-Token','Authorization':null};
 
 final filters_map={
-    "Sorts":{"По рейтингу":"rating_score", "По количеству оценок":"rate", "По названию":"name", "По дате обновлениям":"last_chapter_at","По дате добавления":"created_at","По просмотрам":"views","По количеству глав":"chap_count"},
-    "Order":{"По убыванию":"desc","По возрастанию":"asc"}
+    "sorts":{"По рейтингу":"rate_avg", "По названию (A-Z)":"name", "По названию (А-Я)":"rus_name","По дате релиза":"releaseDate","По дате обновлениям":"last_chapter_at","По дате добавления":"created_at","По просмотрам":"views","По количеству глав":"chap_count"},
+    "order":{"По убыванию":"desc","По возрастанию":"asc"},
+    "bookmarks":{"Читаю":"1","В планах":"2","Брошено":"3","Прочитано":"4","Любимые":"5"}
 };
 
-var ui;
-
 fun update(url:str) async {
-    url=gsub(url,'https?:[\\/][\\/][^\\/]+',host());
-    var response=await load(url);
+    var response=await load('${url}?fields[]=background&fields[]=eng_name&fields[]=otherNames&fields[]=summary&fields[]=releaseDate&fields[]=type_id&fields[]=caution&fields[]=views&fields[]=rate_avg&fields[]=rate&fields[]=genres&fields[]=tags&fields[]=teams&fields[]=franchise&fields[]=authors&fields[]=publisher&fields[]=manga_status_id&fields[]=chap_count&fields[]=status_id&fields[]=artists&fields[]=format');
     if(response['status']==200){
-        var doc=Document.parse(response['body']);
-        var json=decode(match(doc.select('script').text,'window.__DATA__ = (.+);'));
-        ui=json['user']!=null ? json['user']['id'] : null;
-        var manga=json['manga'];
-        var container=doc.select('div.container_responsive');
-        var chapters=json['chapters']['list'];
-        var branches=json['chapters']['branches'];
-        var teams={};
-        var to_struct=(key,value){var map=null; if(key is str){map={}; map[key]=value;} return map;}
-        if(branches!=null){
-            teams=toMap(
-                branches.expand((e)=>e['teams'] ?? []), 
-                key: (e)=>e['branch_id'],
-                value: (e)=>to_struct(e['name'],'${host()}/team/${e['slug']}?id=${e['id']}')
-            );
-        }
+        var info=decode(unescape(response['body']))['data'];
         return {
-            'id':json['manga']['id'],
+            'id':info['id'],
+            'slug':info['slug'],
             'url':url,
-            'web':json['url'],
-            'type':'manga',
-            'names':([json['manga']['engName'],json['manga']['rusName'],json['manga']['name']]+json['manga']['altNames']).where((e)=>e!='').map((e)=>unescape(e)),
-            'authors':toMap(container.selectAll('div.media-info-list__item:contains(Автор) > div > a[href*="/people/"]'),key:(e)=>e.text,value:(e)=>e.attr('href')),
-            'artists':toMap(container.selectAll('div.media-info-list__item:contains(Художник) > div > a[href*="/people/"]'),key:(e)=>e.text,value:(e)=>e.attr('href')),
-            'publishers':toMap(container.selectAll('a[href*="/publisher/"]'),key:(e)=>e.text,value:(e)=>e.attr('href')),
-            'genres':container.selectAll('a.media-tag-item[href*="?genres"]').map((genre)=>genre.text),
-            'tags':container.selectAll('a.media-tag-item[href*="?tags"]').map((genre)=>genre.text),
-            'rating':num_parse(container.select('div.media-rating__value').text)/2,
-            'status':status(match(container.select('a[href*="manga_status"]')?.attr('href'),'manga_status.*=(%d)')),
-            'description':container.select('meta[itemprop="description"]')?.attr('content'),
-            'cover':container.select('img[src^="http"]').attr('src'),
-            'chapters':chapters.reversed.map((chapter)=>{
-                    'id':chapter['chapter_id'],
-                    'vol':chapter['chapter_volume'],
-                    'num':num_parse(chapter['chapter_number']),
-                    'name':chapter['chapter_name'],
-                    'date':timestamp(chapter['chapter_created_at'],"yyyy-MM-dd' 'HH:mm:ss"),
-                    'team':teams[chapter['branch_id']], //translators
-                    'user':to_struct(chapter['username'],'https://mangalib.me/user/${chapter['chapter_user_id']}'), //translators
-                    'bid':chapter['branch_id']
-                }
-            ),
-            'similar':similar(container.selectAll('div.media-slider__item:not(.media-slider__item_more)'))
+            'web':'${host()}/ru/manga/${info['slug']}',
+            'type':info['model'],
+            'names':([info['name'],info['rus_name'],info['eng_name']]+info['otherNames']).where((e)=>e!=null && e!=''),
+            'authors':toMap(info['authors'],key:(e)=>e['name'],value:(e)=>'${api()}/api/manga?site_id[]=4&target_id=${e['id']}&target_model=${e['model']}'),
+            'artists':toMap(info['artists'],key:(e)=>e['name'],value:(e)=>'${api()}/api/manga?site_id[]=4&target_id=${e['id']}&target_model=${e['model']}'),
+            'publishers':toMap(info['publisher'],key:(e)=>e['name'],value:(e)=>'${api()}/api/manga?site_id[]=4&target_id=${e['id']}&target_model=${e['model']}'),
+            'genres':info['genres'].map((e)=>e['name']),
+            'tags':info['tags'].map((e)=>e['name']),
+            'rating':num_parse(info['rating']['average'])/2,
+            'status':status(info['status']['id'].toString()),
+            'description':info['summary'],
+            'cover':info['cover']['default'],
+            'background':info['background']['url']
         };
+    }else{
+        log(encode(response));
+        return null;
+    }
+}
+
+fun branches(url:str) async {
+    final response=await load('${url}/chapters');
+    if(response['status']==200){
+        final chapters=decode(unescape(response['body']))['data'];
+        var branches=chapters.expand((chapter)=>chapter['branches'].map((branch)=>{
+            'id':branch['branch_id'],
+            'name':branch['teams'].first['name'],
+            'chapter':{
+                'id':branch['id'],
+                'vol':num_parse(chapter['volume']),
+                'num':num_parse(chapter['number']),
+                'name':chapter['name'],
+                'date':timestamp(branch['created_at'],"yyyy-MM-ddTHH:mm:ss"),
+                'teams':Prototype.fromJson(toMap(branch['teams'],key:(e)=>e['name'],value:(e)=>'${api()}/api/manga?site_id[]=4&target_id=${e['id']}&target_model=team')),
+                'users':Prototype.fromJson(toMap([branch['user']],key:(e)=>e['username'],value:(e)=>'${api()}/api/bookmarks?page=1&status=0&user_id=${e['id']}'))
+            }
+        }).toList());
+        branches=Prototype.fromJson(toMap(
+            branches.map((branch)=>branch['id']),
+            key:(bid)=>bid?.toString() ?? 'null',
+            value:(bid)=>{
+                'id':bid?.toString() ?? 'null',
+                'name':branches.where((branch)=>branch['id']==bid).map((branch)=>branch['name']).first,
+                'chapters':branches.where((branch)=>branch['id']==bid).map((branch)=>branch['chapter']).toList()
+            }
+        ));
+        return branches;
     }else{
         log(encode(response));
         return null;
@@ -77,134 +84,75 @@ fun query(name:str?,page:int?,filters) async {
         return await query_url(name,page)
     }else if(filters!=null){
         var empty=(string)=>string==null || string=='' ? null:string;
-        var url_params={'name':empty(name),'page':page+1}
-        if(filters['Sort']!=null){
-            url_params['sort']=empty(filters['Sort']['selected']);
-            url_params['dir']=empty(filters['Sort']['sort']);
+        var url_params={'q':empty(name),'page':page+1,'site_id[]':4}
+        if(filters['sort']!=null){
+            url_params['sort_by']=empty(filters['sort']['selected']);
+            url_params['sort_type']=empty(filters['sort']['sort']);
         }
-        if(filters['Chapters range']!=null){
-            url_params['chapters[min]']=empty(filters['Chapters range']['start']);
-            url_params['chapters[max]']=empty(filters['Chapters range']['end']);
+        if(filters['chapters']!=null){
+            url_params['chap_count_min']=empty(filters['chapters']['start']);
+            url_params['chap_count_max']=empty(filters['chapters']['end']);
         }
-        if(filters['Release year']!=null){
-            url_params['year[min]']=empty(filters['Release year']['start']);
-            url_params['year[max]']=empty(filters['Release year']['end']);
+        if(filters['release']!=null){
+            url_params['year_min']=empty(filters['release']['start']);
+            url_params['year_max']=empty(filters['release']['end']);
         }
-        if(filters['Rating']!=null){
-            url_params['rating[min]']=empty(filters['Rating']['start']);
-            url_params['rating[max]']=empty(filters['Rating']['end']);
+        if(filters['rating']!=null){
+            url_params['rating_min']=empty(filters['rating']['start']);
+            url_params['rating_max']=empty(filters['rating']['end']);
         }
-        if(filters['Genres']!=null){
-            url_params[filters['Genres']['selected'].map((e)=>'genres[include][]=${e}').join('&')]='';
-            url_params[filters['Genres']['deselected'].map((e)=>'genres[exclude][]=${e}').join('&')]='';
+        if(filters['genres']!=null){
+            url_params[filters['genres']['selected'].map((e)=>'genres[]=${e}').join('&')]='';
+            url_params[filters['genres']['deselected'].map((e)=>'genres_exclude[]=${e}').join('&')]='';
         }
-        if(filters['Tags']!=null){
-            url_params[filters['Tags']['selected'].map((e)=>'tags[include][]=${e}').join('&')]='';
-            url_params[filters['Tags']['deselected'].map((e)=>'tags[exclude][]=${e}').join('&')]='';
+        if(filters['tags']!=null){
+            url_params[filters['tags']['selected'].map((e)=>'tags[]=${e}').join('&')]='';
+            url_params[filters['tags']['deselected'].map((e)=>'tags_exclude[]=${e}').join('&')]='';
         }
-        if(filters['Series']!=null){
-            url_params['series[]']=empty(filters['Series']['selected']);
+        if(filters['series']!=null){
+            url_params[filters['series']['selected'].map((e)=>'series[]=${e}').join('&')]='';
         }
-        if(filters['Types']!=null){
-            url_params['types[]']=empty(filters['Types']['selected']);
+        if(filters['types']!=null){
+            url_params[filters['types']['selected'].map((e)=>'types[]=${e}').join('&')]='';
         }
-        if(filters['Manga status']!=null){
-            url_params['manga_status[]']=empty(filters['Manga status']['selected']);
+        if(filters['statuses']!=null){
+            url_params[filters['statuses']['selected'].map((e)=>'status[]=${e}').join('&')]='';
         }
-        if(filters['Formats']!=null){
-            url_params[filters['Formats']['selected'].map((e)=>'format[include][]=${e}').join('&')]='';
-            url_params[filters['Formats']['deselected'].map((e)=>'format[exclude][]=${e}').join('&')]='';
+        if(filters['formats']!=null){
+            url_params[filters['formats']['selected'].map((e)=>'format[]=${e}').join('&')]='';
+            url_params[filters['formats']['deselected'].map((e)=>'format_exclude[]=${e}').join('&')]='';
         }
         url_params['']=null;
-        return await query_url(url('${host()}/manga-list',url_params),null)
+        return await query_url(url('${api()}/api/manga',url_params),null)
     }
 }
 
 
 fun query_url(url:str,page:int?) async {
-    if(!find(url,'${host()}/team') && page!=null && page>0){
-        url=find(url,'page=') ? gsub(url,'page=%d+','page=${page+1}') : '${url}&page=${page+1}'
-    }
     url=raw(url);
-    log(url);
-    var response;
-    if(find(url,'${host()}/team/')){
-        var id=match(url,'\?id=(\d+)');
-        if(id==null){
-            response=await load(url);
-            if(response['status']==200){
-                var doc=Document.parse(response['body']);
-                var json=decode(match(doc.select('script').text,'window.__DATA__ = ({.*});'))['team'];
-                id=json['id'];
-            }else{
-                log(encode(response));
-                return null;
-            }
+    if(find(url,'${api()}/api/manga') || find(url,'${api()}/api/bookmarks')){
+        if(page!=null && page>0){
+            url=find(url,'page=') ? gsub(url,'page=%d+','page=${page+1}') : '${url}&page=${page+1}'
         }
-        response=await load('${host()}/api/list',null,{'page':(page??0)+1,'sort':'rate','dir':'desc','target':'team','targetValue':id});
+        var response=await load(url,{'Site-Id':'4'});
+        print('${response['status']} ${url}');
         if(response['status']==200){
-            var json=decode(response['body'])['items']['data'];
-            return json.map((e)=>{
-                'id':e['id'],
-                'slug':e['slug'],
-                'url':e['href'],
-                'web':e['href'],
-                'names':[e['name'],e['eng_name'],e['rus_name']],
-                'cover':e['covers']['default']
-            }).toList();
+            return parse_books(decode(unescape(response['body']))['data']);
         }else{
+            print(unescape(response['body']));
             log(encode(response));
             return null;
         }
-    }else if(find(url,'${host()}/user/\d+')){
-        var id=match(url,'/user/(\d+)');
-        response=await load('${host()}/bookmark/${id}')
-        if(response['status']==200){
-            var json=decode(response['body'])['items'];
-            return json.map((e)=>{
-                'id':e['manga_id'],
-                'slug':e['slug'],
-                'url':'${host()}/${e['slug']}',
-                'web':'${host()}/${e['slug']}',
-                'names':[e['manga_name'],e['rus_name']],
-                'cover':'${host()}/uploads/cover/${e['slug']}/cover/${e['cover']}_250x350.jpg'
-            }).toList();
-        }else{
-            log(encode(response));
-            return null;
-        }
-    }else{
-        response=await load(url);
-        if(response['status']==200){
-            var doc=Document.parse(response['body']);
-            var selects=doc.selectAll('div.media-card-wrap > a.media-card');
-            return selects.map((e)=>{
-                'id':e.attr('data-media-id'),
-                'slug':e.attr('data-media-slug'),
-                'url':e.attr('href'),
-                'web':e.attr('href'),
-                'names':[e.select('h3').text],
-                'cover':fix_url(e.attr('data-src'))
-            }).toList();
-        }else{
-            log(encode(response));
-            return null;
-        }
-        
     }
 }
+
 var servers={};
-fun pages(url,chapter) async {
-    log(safe_params('${url}/v${chapter['vol']}/c${chapter['num']}',{'page':'1','ui':ui,'bid':chapter['bid']}));
-    var response=await load(safe_params('${url}/v${chapter['vol']}/c${chapter['num']}',{'page':'1','ui':ui,'bid':chapter['bid']}));
+fun pages(url,branch,chapter) async {
+    var response=await load(safe_params('${url}/chapter',{'branch_id':branch['id']=='null' ? null : branch['id'],'volume':chapter['vol'],'number':chapter['num']}));
     if(response['status']==200){
-        var doc=Document.parse(response['body']);
-        var json=decode(match(doc.select('script:contains(__info)').text,'window.__info = (.+);'));
-        var pages=decode(match(doc.select('script:contains(__pg)').text,'window.__pg = (.+);'));
-        servers=json['servers'];
-        var d='${servers[json['img']['server']]}/${json['img']['url']}';
-        return pages.map((e)=>{'page':e['p'],'data':'${d}${e['u']}'}).toList();
+        return decode(unescape(response['body']))['data']['pages'].map((e)=>'https://img3.imglib.info${e['url']}').toJson();
     }else{
+        print(response['body']);
         log(encode(response));
         return null;
     }
@@ -212,79 +160,100 @@ fun pages(url,chapter) async {
 
 
 fun filters()=>{
-    'Sort':{
+    'sort':{
         'title':'Сортировка',
         'mode':'single',
         'order':true,
-        'values': filters_map['Sorts']
+        'values': filters_map['sorts']
     },
-    'Chapters range':{
+    'chapters':{
         'title':'Колличество глав',
         'mode':'range'
     },
-    'Release year':{
+    'release':{
         'title':'Год выпуска',
         'mode':'range'
     },
-    'Rating':{
+    'rating':{
         'title':'Оценка',
         'mode':'range'
     },
-    'Genres':{
-        'title':'Жанры',
-        'mode':'three',
-        'values': filters_map['Genres']
-    },
-    'Tags':{
-        'title':'Теги',
-        'mode':'three',
-        'values': filters_map['Tags']
-    },
-    'Series':{
-        'title':'Серии',
-        'mode':'double',
-        'values': filters_map['Series']
-    },
-    'Types':{
+    'types':{
         'title':'Типы',
         'mode':'double',
-        'values': filters_map['Types']
+        'values': filters_map['types']
     },
-    'Statuses':{
+    'statuses':{
         'title':'Статус тайтла',
         'mode':'double',
-        'values': filters_map['Statuses']
+        'values': filters_map['statuses']
     },
-    'Formats':{
+    'formats':{
         'title':'Формат',
         'mode':'three',
-        'values': filters_map['Formats']
+        'values': filters_map['formats']
+    },
+    'scanlate':{
+        'title':'Статус перевода',
+        'mode':'three',
+        'values': filters_map['scanlates']
+    },
+    'bookmarks':{
+        'title':'Мои списки',
+        'mode':'three',
+        'values': filters_map['bookmarks']
+    },
+    'genres':{
+        'title':'Жанры',
+        'mode':'three',
+        'values': filters_map['genres']
+    },
+    'tags':{
+        'title':'Теги',
+        'mode':'three',
+        'values': filters_map['tags']
     }
 };
 
-fun similar(elements)=>elements.map((e)=>{
-    'url':e.select('a').attr('href'),
-    'web':e.select('a').attr('href'),
-    'names':[e.select('a').attr('title')],
-    'cover':fix_url(match(e.select('div.manga-list-item__cover').attr('style'),'url\\((.*)\\)'))
-}).toList();
+fun similar(book) async {
+    var response=await load('${book['url']}/similar');
+    if(response['status']==200){
+        return parse_books(decode(unescape(response['body']))['data'].map((e)=>e['media']));
+    }else{
+        print(unescape(response['body']));
+        log(encode(response));
+        return null;
+    }
+};
 
 fun status(status:str) => {'3':'Announce','1':'Ongoing','4':'Paused','5':'Stopped','2':'Finished'}[status];
 
+fun parse_books(json)=>json.map((e)=>e['media'] ?? e).map((e)=>{
+    'id':e['id'],
+    'slug':e['slug'],
+    'url':'${api()}/api/manga/${e['slug']}',
+    'web':'${host()}/ru/manga/${e['slug']}',
+    'names':[e['name'],e['rus_name'],e['eng_name']],
+    'rating':num_parse(e['rating']?['average'] ?? '0')/2,
+    'status':status(e['status']['id'].toString()),
+    'type':e['model'],
+    'restrictions':e['ageRestriction']?['label'],
+    'cover':e['cover']['default']
+}).toList();
+
 fun fix_url(url:str) => url?.startsWith('http') ?? true ? url : host()+url;
 fun safe_params(uri:str,params)=>raw(url(uri,params));
-if(filters_map.length==2){
-    load('${host()}/ru/catalog').then((response){
+if(filters_map.length<8){
+    load('${api()}/api/constants?fields[]=genres&fields[]=tags&fields[]=types&fields[]=scanlateStatus&fields[]=status&fields[]=format&fields[]=ageRestriction').then((response){
         if(response['status']==200){
-            var doc=Document.parse(response['body']);
-            var json=decode(match(doc.select('#main-page > div > div > script').text,'window.__DATA = ({.*});'))['filters'];
-            filters_map['Types']=toMap(json['types'].keys,key: (e)=>json['types'][e],value: (e)=>e);
-            filters_map['Statuses']=toMap(json['status'],key: (e)=>e['label'],value: (e)=>e['id']);
-            filters_map['Formats']=toMap(json['format'],key: (e)=>e['name'],value: (e)=>e['id']);
-            filters_map['Genres']=toMap(json['genres'],key: (e)=>e['name'],value: (e)=>e['id']);
-            filters_map['Tags']=toMap(json['tags'],key: (e)=>e['name'],value: (e)=>e['id']);
-            filters_map['Series']=toMap(json['series'],key: (e)=>e['name'],value: (e)=>e['id']);
-            filters_map['Manga status']=toMap(json['manga_status'],key: (e)=>e['label'],value: (e)=>e['id']);
+            var json=decode(unescape(response['body']))['data']
+            filters_map['genres']=toMap(json['genres'].where((e)=>e['site_ids'].contains(4)),key: (e)=>e['name'],value: (e)=>e['id']);
+            filters_map['tags']=toMap(json['tags'].where((e)=>e['site_ids'].contains(4)),key: (e)=>e['name'],value: (e)=>e['id']);
+            filters_map['types']=toMap(json['types'].where((e)=>e['site_ids'].contains(4)),key: (e)=>e['label'],value: (e)=>e['id']);
+            filters_map['statuses']=toMap(json['status'].where((e)=>e['site_ids'].contains(4)),key: (e)=>e['label'],value: (e)=>e['id']);
+            filters_map['scanlates']=toMap(json['scanlateStatus'].where((e)=>e['site_ids'].contains(4)),key: (e)=>e['label'],value: (e)=>e['id']);
+            filters_map['formats']=toMap(json['format'].where((e)=>e['site_ids'].contains(4)),key: (e)=>e['name'],value: (e)=>e['id']);
+            filters_map['restrictions']=toMap(json['ageRestriction'].where((e)=>e['site_ids'].contains(4)),key: (e)=>e['label'],value: (e)=>e['id']);
         }else{
             log(encode(response));
             return null;

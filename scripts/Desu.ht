@@ -39,13 +39,19 @@ fun update(url:str) async {
             'status':status(json['status']),
             'description':json['description'],
             'cover':json['image']?['original'],
-            'chapters':json['chapters']['list'].reversed.map((chapter)=>{
-                'id':chapter['id'],
-                'vol':chapter['vol'],
-                'num':chapter['ch'],
-                'name':chapter['title'],
-                'date':chapter['date']*1000
-            })
+            'branches':{
+                '0':{
+                    'id':'0',
+                    'name':'null',
+                    'chapters':json['chapters']['list'].reversed.map((chapter)=>{
+                        'id':chapter['id'],
+                        'vol':chapter['vol'],
+                        'num':chapter['ch'],
+                        'name':chapter['title'],
+                        'date':chapter['date']*1000
+                    }).toList()
+                }
+            }
         };
     }else{
         log(encode(response));
@@ -87,9 +93,9 @@ fun query_url(url,page) async {
     }
 }
 
-fun pages(url,chapter) async {
+fun pages(url,branch,chapter) async {
     var response=await load("${url}/chapter/${chapter['id']}");
-    return response['status']==200 ? decode(response['body'])['response']['pages']['list'].map((page)=>{'page':page['page'],'data':page['img']}).toList() : null;
+    return response['status']==200 ? decode(response['body'])['response']['pages']['list'].map((page)=>page['img']).toList() : null;
 }
 
 fun download(file,url,headers,progress) async {
@@ -116,7 +122,7 @@ fun similar(book) async {
             .selectAll('article.c-anime')
             .map((e)=>e.select('img'))
             .map((e)=>{
-                'id':match(e.attributes['src'],'\\d+'),
+                'id':num_parse(match(e.attributes['src'],'\\d+')),
                 'url':"${host()}/manga/api/${match(e.attributes['src'],'\\d+')}",
                 'web':"${host()}/manga/${match(e.attributes['src'],'\\d+')}",
                 'names':[match(e.attributes['title'],'(.+) \\('),match(e.attributes['alt'],' \\((.+)\\)')],
