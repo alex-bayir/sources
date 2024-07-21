@@ -2,6 +2,7 @@
     {
         "name":"Desu",
         "ico":"https://desu.me/favicon.ico",
+        "version": "1.0",
         "status":"ok",
         "types":["Manga","Manhwa"],
         "languages":["RU"],
@@ -12,6 +13,7 @@
     {
         "name":"Remanga",
         "ico":"https://remanga.org/icons/favicon.ico",
+        "version": "1.0",
         "status":"in work",
         "types":["Manga","Manhwa"],
         "languages":["RU"],
@@ -22,6 +24,7 @@
     {
         "name":"MangaLib",
         "ico":"http://mangalib.me/icons/icon-192x192.png",
+        "version": "1.0",
         "status":"ok",
         "types":["Manga","Manhwa"],
         "languages":["RU"],
@@ -32,6 +35,7 @@
     {
         "name":"HentaiLib",
         "ico":"http://v1.hentailib.org/icons/icon-192x192.png",
+        "version": "1.0",
         "status":"ok",
         "types":["Manga","Manhwa"],
         "languages":["RU"],
