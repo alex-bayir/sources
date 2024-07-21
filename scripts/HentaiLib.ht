@@ -10,6 +10,7 @@ fun host()=>'https://${domain}';
 fun api()=>'https://api.lib.social';
 fun icon()=>'${host()}/images/logo/hl/favicon.ico';
 final auth_tokens={'cf_clearance':null,'mangalib_session':null,'XSRF-TOKEN':'X-Xsrf-Token','Authorization':null};
+final sid=4;
 
 final filters_map={
     "sorts":{"По рейтингу":"rate_avg", "По названию (A-Z)":"name", "По названию (А-Я)":"rus_name","По дате релиза":"releaseDate","По дате обновлениям":"last_chapter_at","По дате добавления":"created_at","По просмотрам":"views","По количеству глав":"chap_count"},
@@ -28,9 +29,9 @@ fun update(url:str) async {
             'web':'${host()}/ru/manga/${info['slug']}',
             'type':info['model'],
             'names':([info['name'],info['rus_name'],info['eng_name']]+info['otherNames']).where((e)=>e!=null && e!=''),
-            'authors':toMap(info['authors'],key:(e)=>e['name'],value:(e)=>'${api()}/api/manga?site_id[]=4&target_id=${e['id']}&target_model=${e['model']}'),
-            'artists':toMap(info['artists'],key:(e)=>e['name'],value:(e)=>'${api()}/api/manga?site_id[]=4&target_id=${e['id']}&target_model=${e['model']}'),
-            'publishers':toMap(info['publisher'],key:(e)=>e['name'],value:(e)=>'${api()}/api/manga?site_id[]=4&target_id=${e['id']}&target_model=${e['model']}'),
+            'authors':toMap(info['authors'],key:(e)=>e['name'],value:(e)=>'${api()}/api/manga?site_id[]=${sid}&target_id=${e['id']}&target_model=${e['model']}'),
+            'artists':toMap(info['artists'],key:(e)=>e['name'],value:(e)=>'${api()}/api/manga?site_id[]=${sid}&target_id=${e['id']}&target_model=${e['model']}'),
+            'publishers':toMap(info['publisher'],key:(e)=>e['name'],value:(e)=>'${api()}/api/manga?site_id[]=${sid}&target_id=${e['id']}&target_model=${e['model']}'),
             'genres':info['genres'].map((e)=>e['name']),
             'tags':info['tags'].map((e)=>e['name']),
             'rating':num_parse(info['rating']['average'])/2,
@@ -58,7 +59,7 @@ fun branches(url:str) async {
                 'num':num_parse(chapter['number']),
                 'name':chapter['name'],
                 'date':timestamp(branch['created_at'],"yyyy-MM-ddTHH:mm:ss"),
-                'teams':Prototype.fromJson(toMap(branch['teams'],key:(e)=>e['name'],value:(e)=>'${api()}/api/manga?site_id[]=4&target_id=${e['id']}&target_model=team')),
+                'teams':Prototype.fromJson(toMap(branch['teams'],key:(e)=>e['name'],value:(e)=>'${api()}/api/manga?site_id[]=${sid}&target_id=${e['id']}&target_model=team')),
                 'users':Prototype.fromJson(toMap([branch['user']],key:(e)=>e['username'],value:(e)=>'${api()}/api/bookmarks?page=1&status=0&user_id=${e['id']}'))
             }
         }).toList());
@@ -84,7 +85,7 @@ fun query(name:str?,page:int?,filters) async {
         return await query_url(name,page)
     }else if(filters!=null){
         var empty=(string)=>string==null || string=='' ? null:string;
-        var url_params={'q':empty(name),'page':page+1,'site_id[]':4}
+        var url_params={'q':empty(name),'page':page+1,'site_id[]':sid}
         if(filters['sort']!=null){
             url_params['sort_by']=empty(filters['sort']['selected']);
             url_params['sort_type']=empty(filters['sort']['sort']);
@@ -134,7 +135,7 @@ fun query_url(url:str,page:int?) async {
         if(page!=null && page>0){
             url=find(url,'page=') ? gsub(url,'page=%d+','page=${page+1}') : '${url}&page=${page+1}'
         }
-        var response=await load(url,{'Site-Id':'4'});
+        var response=await load(url,{'Site-Id':'${sid}'});
         print('${response['status']} ${url}');
         if(response['status']==200){
             return parse_books(decode(unescape(response['body']))['data']);
@@ -247,13 +248,13 @@ if(filters_map.length<8){
     load('${api()}/api/constants?fields[]=genres&fields[]=tags&fields[]=types&fields[]=scanlateStatus&fields[]=status&fields[]=format&fields[]=ageRestriction').then((response){
         if(response['status']==200){
             var json=decode(unescape(response['body']))['data']
-            filters_map['genres']=toMap(json['genres'].where((e)=>e['site_ids'].contains(4)),key: (e)=>e['name'],value: (e)=>e['id']);
-            filters_map['tags']=toMap(json['tags'].where((e)=>e['site_ids'].contains(4)),key: (e)=>e['name'],value: (e)=>e['id']);
-            filters_map['types']=toMap(json['types'].where((e)=>e['site_ids'].contains(4)),key: (e)=>e['label'],value: (e)=>e['id']);
-            filters_map['statuses']=toMap(json['status'].where((e)=>e['site_ids'].contains(4)),key: (e)=>e['label'],value: (e)=>e['id']);
-            filters_map['scanlates']=toMap(json['scanlateStatus'].where((e)=>e['site_ids'].contains(4)),key: (e)=>e['label'],value: (e)=>e['id']);
-            filters_map['formats']=toMap(json['format'].where((e)=>e['site_ids'].contains(4)),key: (e)=>e['name'],value: (e)=>e['id']);
-            filters_map['restrictions']=toMap(json['ageRestriction'].where((e)=>e['site_ids'].contains(4)),key: (e)=>e['label'],value: (e)=>e['id']);
+            filters_map['genres']=toMap(json['genres'].where((e)=>e['site_ids'].contains(sid)),key: (e)=>e['name'],value: (e)=>e['id']);
+            filters_map['tags']=toMap(json['tags'].where((e)=>e['site_ids'].contains(sid)),key: (e)=>e['name'],value: (e)=>e['id']);
+            filters_map['types']=toMap(json['types'].where((e)=>e['site_ids'].contains(sid)),key: (e)=>e['label'],value: (e)=>e['id']);
+            filters_map['statuses']=toMap(json['status'].where((e)=>e['site_ids'].contains(sid)),key: (e)=>e['label'],value: (e)=>e['id']);
+            filters_map['scanlates']=toMap(json['scanlateStatus'].where((e)=>e['site_ids'].contains(sid)),key: (e)=>e['label'],value: (e)=>e['id']);
+            filters_map['formats']=toMap(json['format'].where((e)=>e['site_ids'].contains(sid)),key: (e)=>e['name'],value: (e)=>e['id']);
+            filters_map['restrictions']=toMap(json['ageRestriction'].where((e)=>e['site_ids'].contains(sid)),key: (e)=>e['label'],value: (e)=>e['id']);
         }else{
             log(encode(response));
             return null;
