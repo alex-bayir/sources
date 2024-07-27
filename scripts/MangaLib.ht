@@ -242,7 +242,6 @@ fun parse_books(json)=>json.map((e)=>e['media'] ?? e).map((e)=>{
     'cover':e['cover']['default']
 }).toList();
 
-fun fix_url(url:str) => url?.startsWith('http') ?? true ? url : host()+url;
 fun safe_params(uri:str,params)=>raw(url(uri,params));
 if(filters_map.length<8){
     load('${api()}/api/constants?fields[]=genres&fields[]=tags&fields[]=types&fields[]=scanlateStatus&fields[]=status&fields[]=format&fields[]=ageRestriction').then((response){

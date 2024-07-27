@@ -1,16 +1,16 @@
 import 'imports.ht'
 
 final version='1.0';
-final domains=['hentailib.me','v1.hentailib.org'];
-var domain=domains[1];
-final source='HentaiLib';
-final types='Manga/Manhwa';
-final description='Один из самых популярных источников манги в СНГ.';
+final domains=['ranobelib.me'];
+var domain=domains[0];
+final source='RanobeLib';
+final types='Novel/Ranobe';
+final description='Один из самых популярных источников новел в СНГ.';
 fun host()=>'https://${domain}';
 fun api()=>'https://api.lib.social';
 fun icon()=>'${host()}/images/logo/hl/favicon.ico';
 final auth_tokens={'cf_clearance':null,'mangalib_session':null,'XSRF-TOKEN':'X-Xsrf-Token','Authorization':null};
-final site=4;
+final site=3;
 
 final filters_map={
     "sorts":{"По рейтингу":"rate_avg", "По названию (A-Z)":"name", "По названию (А-Я)":"rus_name","По дате релиза":"releaseDate","По дате обновлениям":"last_chapter_at","По дате добавления":"created_at","По просмотрам":"views","По количеству глав":"chap_count"},
@@ -151,7 +151,7 @@ var servers={};
 fun pages(url,branch,chapter) async {
     var response=await load(safe_params('${url}/chapter',{'branch_id':branch['id']=='null' ? null : branch['id'],'volume':chapter['vol'],'number':chapter['num']}));
     if(response['status']==200){
-        return decode(unescape(response['body']))['data']['pages'].map((e)=>'https://img3.imglib.info${e['url']}').toJson();
+        return decode(unescape(response['body']))['data']['content'].split('(<p\s.+>.*<\/p>|<img\s.+\/>)').map((e)=>match(e,'<p\s.+>(.*)<\/p>')??match(e,'<img\s.*src=\\"(.+)\\"')).toList();
     }else{
         print(response['body']);
         log(encode(response));
