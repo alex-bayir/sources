@@ -33,6 +33,17 @@
         "policy":"12+"
     },
     {
+        "name":"RanobeLib",
+        "ico":"http://ranobelib.me/icons/icon-192x192.png",
+        "version": "1.0",
+        "status":"ok",
+        "types":["Novel","Ranobe"],
+        "languages":["RU"],
+        "source":"https://ranobelib.me",
+        "url":"https://raw.githubusercontent.com/alex-bayir/sources/main/scripts/RanobeLib.ht",
+        "policy":"12+"
+    },
+    {
         "name":"HentaiLib",
         "ico":"http://v1.hentailib.org/icons/icon-192x192.png",
         "version": "1.0",
