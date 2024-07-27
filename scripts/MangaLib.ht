@@ -49,10 +49,11 @@ fun update(url:str) async {
 fun branches(url:str) async {
     final response=await load('${url}/chapters');
     if(response['status']==200){
+        final first=(list:List)=>list.isEmpty ? {} : list.first;
         final chapters=decode(unescape(response['body']))['data'];
         var branches=chapters.expand((chapter)=>chapter['branches'].map((branch)=>{
             'id':branch['branch_id'],
-            'name':branch['teams'].first['name'],
+            'name':first(branch['teams'])['name'],
             'chapter':{
                 'id':branch['id'],
                 'vol':num_parse(chapter['volume']),
