@@ -152,7 +152,7 @@ var servers={};
 fun pages(url,branch,chapter) async {
     var response=await load(safe_params('${url}/chapter',{'branch_id':branch['id']=='null' ? null : branch['id'],'volume':chapter['vol'],'number':chapter['num']}));
     if(response['status']==200){
-        return decode(unescape(response['body']))['data']['content'].split('(<p\s.+>.*<\/p>|<img\s.+\/>)').map((e)=>match(e,'<p\s.+>(.*)<\/p>')??match(e,'<img\s.*src=\\"(.+)\\"')).toList();
+        return matches(decode(unescape(response['body']))['data']['content'],'(<p\s[^>]+>|<img\s[^>]*src=\\")(.+?)(\\"[^>]*>|<\/p>)',2);
     }else{
         print(response['body']);
         log(encode(response));
