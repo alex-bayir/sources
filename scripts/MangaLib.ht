@@ -29,9 +29,9 @@ fun update(url:str) async {
             'web':'${host()}/ru/manga/${info['slug']}',
             'type':info['model'],
             'names':([info['name'],info['rus_name'],info['eng_name']]+info['otherNames']).where((e)=>e!=null && e!=''),
-            'authors':info['authors']?.toMap((e)=>e['name'],(e)=>'${api()}/api/manga?site_id[]=${site}&target_id=${e['id']}&target_model=${e['model']}'),
-            'artists':info['artists']?.toMap((e)=>e['name'],(e)=>'${api()}/api/manga?site_id[]=${site}&target_id=${e['id']}&target_model=${e['model']}'),
-            'publishers':info['publisher']?.toMap((e)=>e['name'],(e)=>'${api()}/api/manga?site_id[]=${site}&target_id=${e['id']}&target_model=${e['model']}'),
+            'authors':info['authors']?.toMap((e)=>e['name'],(e)=>'${api()}/api/manga?site_id[]=${site}&target_id=${e['id']}&target_model=${e['model']}').jsonify(),
+            'artists':info['artists']?.toMap((e)=>e['name'],(e)=>'${api()}/api/manga?site_id[]=${site}&target_id=${e['id']}&target_model=${e['model']}').jsonify(),
+            'publishers':info['publisher']?.toMap((e)=>e['name'],(e)=>'${api()}/api/manga?site_id[]=${site}&target_id=${e['id']}&target_model=${e['model']}').jsonify(),
             'genres':info['genres'].map((e)=>e['name']),
             'tags':info['tags'].map((e)=>e['name']),
             'rating':num_parse(info['rating']['average'])/2,
@@ -59,18 +59,18 @@ fun branches(url:str) async {
                 'num':num_parse(chapter['number']),
                 'name':chapter['name'],
                 'date':timestamp(branch['created_at'],"yyyy-MM-ddTHH:mm:ss"),
-                'teams':Prototype.fromJson(branch['teams']?.toMap((e)=>e['name'],(e)=>'${api()}/api/manga?site_id[]=${site}&target_id=${e['id']}&target_model=team')),
-                'users':Prototype.fromJson([branch['user']].toMap((e)=>e['username'],(e)=>'${api()}/api/bookmarks?page=1&status=0&user_id=${e['id']}'))
+                'teams':branch['teams']?.toMap((e)=>e['name'],(e)=>'${api()}/api/manga?site_id[]=${site}&target_id=${e['id']}&target_model=team').jsonify(),
+                'users':[branch['user']].toMap((e)=>e['username'],(e)=>'${api()}/api/bookmarks?page=1&status=0&user_id=${e['id']}').jsonify()
             }
         }).toList()).toList();
-        branches=Prototype.fromJson(branches.map((branch)=>branch['id']).toSet().toMap(
+        branches=branches.map((branch)=>branch['id']).toSet().toMap(
             (bid)=>bid?.toString() ?? 'null',
             (bid)=>{
                 'id':bid?.toString() ?? 'null',
                 'name':branches.where((branch)=>branch['id']==bid).map((branch)=>branch['name']).first,
                 'chapters':branches.where((branch)=>branch['id']==bid).map((branch)=>branch['chapter']).toList()
             }
-        ));
+        ).jsonify();
         return branches;
     }else{
         log(encode(response));
@@ -246,13 +246,13 @@ if(filters_map.length<8){
     load('${api()}/api/constants?fields[]=genres&fields[]=tags&fields[]=types&fields[]=scanlateStatus&fields[]=status&fields[]=format&fields[]=ageRestriction').then((response){
         if(response['status']==200){
             var json=decode(unescape(response['body']))['data']
-            filters_map['genres']=json['genres'].where((e)=>e['site_ids'].contains(site)).toMap((e)=>e['name'],(e)=>e['id']);
-            filters_map['tags']=json['tags'].where((e)=>e['site_ids'].contains(site)).toMap((e)=>e['name'],(e)=>e['id']);
-            filters_map['types']=json['types'].where((e)=>e['site_ids'].contains(site)).toMap((e)=>e['label'],(e)=>e['id']);
-            filters_map['statuses']=json['status'].where((e)=>e['site_ids'].contains(site)).toMap((e)=>e['label'],(e)=>e['id']);
-            filters_map['scanlates']=json['scanlateStatus'].where((e)=>e['site_ids'].contains(site)).toMap((e)=>e['label'],(e)=>e['id']);
-            filters_map['formats']=json['format'].where((e)=>e['site_ids'].contains(site)).toMap((e)=>e['name'],(e)=>e['id']);
-            filters_map['restrictions']=json['ageRestriction'].where((e)=>e['site_ids'].contains(site)).toMap((e)=>e['label'],(e)=>e['id']);
+            filters_map['genres']=json['genres'].where((e)=>e['site_ids'].contains(site)).toMap((e)=>e['name'],(e)=>e['id']).jsonify();
+            filters_map['tags']=json['tags'].where((e)=>e['site_ids'].contains(site)).toMap((e)=>e['name'],(e)=>e['id']).jsonify();
+            filters_map['types']=json['types'].where((e)=>e['site_ids'].contains(site)).toMap((e)=>e['label'],(e)=>e['id']).jsonify();
+            filters_map['statuses']=json['status'].where((e)=>e['site_ids'].contains(site)).toMap((e)=>e['label'],(e)=>e['id']).jsonify();
+            filters_map['scanlates']=json['scanlateStatus'].where((e)=>e['site_ids'].contains(site)).toMap((e)=>e['label'],(e)=>e['id']).jsonify();
+            filters_map['formats']=json['format'].where((e)=>e['site_ids'].contains(site)).toMap((e)=>e['name'],(e)=>e['id']).jsonify();
+            filters_map['restrictions']=json['ageRestriction'].where((e)=>e['site_ids'].contains(site)).toMap((e)=>e['label'],(e)=>e['id']).jsonify();
         }else{
             log(encode(response));
             return null;
