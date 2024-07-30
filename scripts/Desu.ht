@@ -91,10 +91,6 @@ fun pages(url,branch,chapter) async {
     return response['status']==200 ? decode(response['body'])['response']['pages']['list'].map((page)=>page['img']).toList() : null;
 }
 
-fun download(file,url,headers,progress) async {
-    return await downloadTo(file,url,headers,progress);
-}
-
 fun filters() => {
     'Sort':{
         'title':'Сортировка',
