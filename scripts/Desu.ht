@@ -1,11 +1,4 @@
-import 'imports.ht' // importing classes an functions
-//classes:
-//  Document,Element : for parse HTML
-//functions:
-//  load : network get(url,headers)
-//  decode: json.decode(json)
-//  gsub,match,find: regexp
-//  url: url(endpoint,params) -> string
+import 'imports.ht'
 
 final version="1.0"
 final domains=["desu.me","desu.win"]

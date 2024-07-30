@@ -12,6 +12,9 @@ fun icon()=>'${host()}/images/logo/hl/favicon.ico';
 final auth_tokens={'cf_clearance':null,'mangalib_session':null,'XSRF-TOKEN':'X-Xsrf-Token','Authorization':null};
 final site=3;
 
+var primary='download';
+var servers=[primary].toMap((e)=>e,(e)=>'https://img33.imglib.info');
+
 final filters_map={
     "sorts":{"По рейтингу":"rate_avg", "По названию (A-Z)":"name", "По названию (А-Я)":"rus_name","По дате релиза":"releaseDate","По дате обновлениям":"last_chapter_at","По дате добавления":"created_at","По просмотрам":"views","По количеству глав":"chap_count"},
     "order":{"По убыванию":"desc","По возрастанию":"asc"},
@@ -146,7 +149,6 @@ fun query_url(url:str,page:int?) async {
     }
 }
 
-var servers={};
 fun pages(url,branch,chapter) async {
     var response=await load(safe_params('${url}/chapter',{'branch_id':branch['id']=='null' ? null : branch['id'],'volume':chapter['vol'],'number':chapter['num']}));
     if(response['status']==200){
@@ -157,7 +159,6 @@ fun pages(url,branch,chapter) async {
         return null;
     }
 }
-
 
 fun filters()=>{
     'sort':{
@@ -243,9 +244,10 @@ fun parse_books(json)=>json.map((e)=>e['media'] ?? e).map((e)=>{
 
 fun safe_params(uri:str,params)=>raw(url(uri,params));
 if(filters_map.length<8){
-    load('${api()}/api/constants?fields[]=genres&fields[]=tags&fields[]=types&fields[]=scanlateStatus&fields[]=status&fields[]=format&fields[]=ageRestriction').then((response){
+    load('${api()}/api/constants?fields[]=genres&fields[]=tags&fields[]=types&fields[]=scanlateStatus&fields[]=status&fields[]=format&fields[]=ageRestriction&fields[]=imageServers').then((response){
         if(response['status']==200){
-            var json=decode(unescape(response['body']))['data']
+            var json=decode(unescape(response['body']))['data'];
+            servers=json['imageServers'].where((e)=>e['site_ids'].contains(site)).toMap((e)=>e['id'],(e)=>e['url']);
             filters_map['genres']=json['genres'].where((e)=>e['site_ids'].contains(site)).toMap((e)=>e['name'],(e)=>e['id']).jsonify();
             filters_map['tags']=json['tags'].where((e)=>e['site_ids'].contains(site)).toMap((e)=>e['name'],(e)=>e['id']).jsonify();
             filters_map['types']=json['types'].where((e)=>e['site_ids'].contains(site)).toMap((e)=>e['label'],(e)=>e['id']).jsonify();
