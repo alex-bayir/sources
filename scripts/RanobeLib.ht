@@ -22,7 +22,7 @@ final filters_map={
 };
 
 fun update(url:str) async {
-    var response=await load('${url}?fields[]=background&fields[]=eng_name&fields[]=otherNames&fields[]=summary&fields[]=releaseDate&fields[]=type_id&fields[]=caution&fields[]=views&fields[]=rate_avg&fields[]=rate&fields[]=genres&fields[]=tags&fields[]=teams&fields[]=franchise&fields[]=authors&fields[]=publisher&fields[]=manga_status_id&fields[]=chap_count&fields[]=status_id&fields[]=artists&fields[]=format');
+    var response=await sload('${url}?fields[]=background&fields[]=eng_name&fields[]=otherNames&fields[]=summary&fields[]=releaseDate&fields[]=type_id&fields[]=caution&fields[]=views&fields[]=rate_avg&fields[]=rate&fields[]=genres&fields[]=tags&fields[]=teams&fields[]=franchise&fields[]=authors&fields[]=publisher&fields[]=manga_status_id&fields[]=chap_count&fields[]=status_id&fields[]=artists&fields[]=format');
     if(response['status']==200){
         var info=decode(unescape(response['body']))['data'];
         return {
@@ -50,7 +50,7 @@ fun update(url:str) async {
 }
 
 fun branches(url:str) async {
-    final response=await load('${url}/chapters');
+    final response=await sload('${url}/chapters');
     if(response['status']==200){
         final chapters=decode(unescape(response['body']))['data'];
         var branches=chapters.expand((chapter)=>chapter['branches'].map((branch)=>{
@@ -137,7 +137,7 @@ fun query_url(url:str,page:int?) async {
         if(page!=null && page>0){
             url=find(url,'page=') ? gsub(url,'page=%d+','page=${page+1}') : '${url}&page=${page+1}'
         }
-        var response=await load(url,{'Site-Id':'${site}'});
+        var response=await sload(url,{'Site-Id':'${site}'});
         print('${response['status']} ${url}');
         if(response['status']==200){
             return parse_books(decode(unescape(response['body']))['data']);
@@ -150,7 +150,7 @@ fun query_url(url:str,page:int?) async {
 }
 
 fun pages(url,branch,chapter) async {
-    var response=await load(safe_params('${url}/chapter',{'branch_id':branch['id']=='null' ? null : branch['id'],'volume':chapter['vol'],'number':chapter['num']}));
+    var response=await sload(safe_params('${url}/chapter',{'branch_id':branch['id']=='null' ? null : branch['id'],'volume':chapter['vol'],'number':chapter['num']}));
     if(response['status']==200){
         return matches(decode(unescape(response['body']))['data']['content'],'(<p\s[^>]+>|<img\s[^>]*src=\\")(.+?)(\\"[^>]*>|<\/p>)',2);
     }else{
@@ -217,7 +217,7 @@ fun filters()=>{
 };
 
 fun similar(book) async {
-    var response=await load('${book['url']}/similar');
+    var response=await sload('${book['url']}/similar');
     if(response['status']==200){
         return parse_books(decode(unescape(response['body']))['data'].map((e)=>e['media']));
     }else{
@@ -244,7 +244,7 @@ fun parse_books(json)=>json.map((e)=>e['media'] ?? e).map((e)=>{
 
 fun safe_params(uri:str,params)=>raw(url(uri,params));
 if(filters_map.length<8){
-    load('${api()}/api/constants?fields[]=genres&fields[]=tags&fields[]=types&fields[]=scanlateStatus&fields[]=status&fields[]=format&fields[]=ageRestriction&fields[]=imageServers').then((response){
+    sload('${api()}/api/constants?fields[]=genres&fields[]=tags&fields[]=types&fields[]=scanlateStatus&fields[]=status&fields[]=format&fields[]=ageRestriction&fields[]=imageServers').then((response){
         if(response['status']==200){
             var json=decode(unescape(response['body']))['data'];
             servers=json['imageServers'].where((e)=>e['site_ids'].contains(site)).toMap((e)=>e['id'],(e)=>e['url']);

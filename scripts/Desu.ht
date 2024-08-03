@@ -18,7 +18,7 @@ final filters_map={
 
 fun update(url:str) async {
     url=gsub(url,'https?:[\\/][\\/][^\\/]+',host())
-    var response=await load(url)
+    var response=await uload(url)
     if(response['status']==200){
         var json=decode(response['body'])['response']
         return {
@@ -66,7 +66,7 @@ fun query_url(url,page) async {
     if(page!=null){url=url(url,{'page':(page??0)+1})}
     url=raw(url);
     log(url);
-    var response=await load(url);
+    var response=await uload(url);
     if(response['status']==200){
         return decode(response['body'])['response'].map((json)=>{
                 'id':json['id'],
@@ -87,8 +87,8 @@ fun query_url(url,page) async {
 }
 
 fun pages(url,branch,chapter) async {
-    var response=await load("${url}/chapter/${chapter['id']}");
-    return response['status']==200 ? decode(response['body'])['response']['pages']['list'].map((page)=>page['img']).toList() : null;
+    var response=await sload("${url}/chapter/${chapter['id']}"); assert(response['status']==200);
+    return decode(response['body'])['response']['pages']['list'].map((page)=>page['img']).toList();
 }
 
 fun filters() => {
@@ -105,7 +105,7 @@ fun filters() => {
 }
 
 fun similar(book) async {
-    var response=await load(book['web'])
+    var response=await uload(book['web'])
     if(response['status']==200){
         return Document.parse(response['body'])
             .selectAll('article.c-anime')
