@@ -1,0 +1,197 @@
+import 'imports.ht'
+
+final version="1.0"
+final domains=["remanga.org","реманга.орг","recomics.org"]
+var domain=domains[0]
+final source="Remanga"
+final types="Manga/Manhwa"
+final description="Ещё один довольно популярный каталог манги."
+fun host()=>'https://api.${domain}';
+fun icon()=>'${host()}/favicon.ico';
+final auth_tokens={"user":null,"token":null};
+
+final filters_map=['sort'].toMap((e)=>e,(e)=>{'1':'-rating','2':'-id','3':'-chapter_date'});
+
+fun update(url:str) async {
+    url=gsub(url,"https?:[\\/][\\/][^\\/]+",host());
+    var response=await uload(url);
+    assert(response['status']==200);
+    final json=decode(response['body'])['content'];
+    return {
+        'id':json['id'],
+        'url':url,
+        'url_web':'https://${domain}/manga/${json['dir']}',
+        'names':[json['rus_name'],json['en_name']],
+        'genres':json['genres'].map((e)=>e['name']).toList(),
+        'tags':json['categories'].map((e)=>e['name']).toList(),
+        'rating':json['avg_rating']/2,
+        'status':status(json['status']['name']),
+        'description':json['description'],
+        'cover':'${host()}${json['img']['high']}'
+    }
+}
+fun branches(url:str) async {
+    var response=await uload(url);
+    assert(response['status']==200);
+    final json=decode(response['body'])['content'];
+    final branches=Map();
+    for(var branch in json['branches']){
+        final chapters=[];
+        final users=branch['publishers'].toMap((e)=>e['name'],(e)=>'https://${domain}/api/titles?count=100&ordering=-id&publisher=${e['id']}').jsonify();
+        for(var i=1;i<=(branch['count_chapters']/100.0).ceil();i++){
+            response=await uload('${host()}/api/titles/chapters/?branch_id=${branch['id']}&count=100&page=${i}');
+            assert(response['status']==200);
+            chapters.addAll(decode(response['body'])['content'].map((e)=>{
+                'id':e['id'],
+                'vol':e['tome'],
+                'num':num_parse(e['chapter']),
+                'name':e['name'],
+                'date':timestamp(e['upload_date'],"yyyy-MM-dd'T'HH:mm:ss"),
+                'users':users,
+                'paid':e['is_paid'],
+                'bought':e['is_bought'],
+                'close':e['is_paid']
+            }));
+        }
+        
+        branches[branch['id']]={
+            'id':branch['id'].toString(),
+            'chapters':chapters
+        };
+    }
+    return branches.jsonify();
+}
+
+fun query(name:str?,page:int?,filters) async {
+    var empty=(string)=>string==null || string=='' ? null:string;
+    final u=url('${host()}/api/search${empty(name)!=null ? '/' : '/catalog/'}',{'query':empty(name),'page':page+1});
+    var url_params={};
+    if(filters!=null){
+        if(filters['sort']!=null){
+            url_params['ordering']=filters['sort']['selected'];
+        }
+        if(filters['genres']!=null){
+            url_params['genres']=empty(filters['genres']['selected']);
+        }
+        if(filters['tags']!=null){
+            url_params['categories']=empty(filters['tags']['selected']);
+        }
+        if(filters['types']!=null){
+            url_params['types']=empty(filters['types']['selected']);
+        }
+        if(filters['status']!=null){
+            url_params['status']=empty(filters['status']['selected']);
+        }
+        if(filters['age_limit']!=null){
+            url_params['age_limit']=empty(filters['age_limit']['selected']);
+        }
+        if(filters['relations']!=null){
+            url_params['relations']=empty(filters['relations']['selected']);
+        }
+        if(filters['translate_status']!=null){
+            url_params['translate_status']=empty(filters['translate_status']['selected']);
+        }
+        if(filters['additional']!=null){
+            url_params['additional']=empty(filters['additional']['selected']);
+        }
+    }
+    return await query_url(url(u,url_params),null)
+}
+
+fun query_url(url:str?,page:int?) async {
+    if(page!=null){
+        url=url.contains('page=') ? gsub(url,'page=\d+','page=${page+1}') : '${url}&page=${page+1}';
+    }
+    print(url);
+    final response=await uload(url);
+    assert(response['status']==200);
+    return decode(response['body'])['content'].map((e)=>{
+        'id':e['id'],
+        'url':'${host()}/api/titles/${e['dir']}',
+        'web':'https://${domain}/manga/${e['dir']}',
+        'names':[e['rus_name'],e['en_name']],
+        'rating':num_parse(e['avg_rating']??'0.0')/2,
+        'cover':'${host()}${e['img']['high']}'
+    });
+}
+
+fun pages(url,branch,chapter) async {
+    final response=await uload(gsub(url,'[^/]+$','chapters/${chapter['id']}'));
+    assert(response['status']==200);
+    return decode(response['body'])['content']['pages'].expand((e)=>(e is List) ? e.map((e)=>e['link']).toList() : [e['link']]).toList();
+}
+
+fun filters()=>{
+    'sort':{
+        'title':'Сортировка',
+        'mode':'single',
+        'order':true,
+        'values': filters_map['sorts']
+    },
+    'genres':{
+        'title':'Жанры',
+        'mode':'double',
+        'values': filters_map['genres']
+    },
+    'tags':{
+        'title':'Теги',
+        'mode':'double',
+        'values': filters_map['categories']
+    },
+    'types':{
+        'title':'Типы',
+        'mode':'double',
+        'values': filters_map['types']
+    },
+    'status':{
+        'title':'Статус тайтла',
+        'mode':'double',
+        'values': filters_map['status']
+    },
+    'age_limit':{
+        'title':'Возрастное ограничение',
+        'mode':'double',
+        'values': filters_map['age_limit']
+    },
+    'relations':{
+        'title':'Тип истории',
+        'mode':'double',
+        'values': filters_map['relations']
+    },
+    'translate_status':{
+        'title':'Статус перевода',
+        'mode':'double',
+        'values': filters_map['translate_status']
+    },
+    'additional':{
+        'title':'Дополнительно',
+        'mode':'double',
+        'values': filters_map['additional']
+    }
+}
+
+fun similar(book) async {
+    final response=await uload('${book['url']}/similar');
+    assert(response['status']==200);
+    return decode(response['body'])['content'].map((e)=>e['title']).map((e)=>{
+        'id':e['id'],
+        'url':'${host()}/api/titles/${e['dir']}',
+        'web':'https://${domain}/manga/${e['dir']}',
+        'names':[e['rus_name'],e['en_name']],
+        'rating':num_parse(e['avg_rating']??'0.0')/2,
+        'cover':'${host()}${e['img']['high']}'
+    });
+}
+
+fun status(status){
+    return {'Анонс':'Announce','Продолжается':'Ongoing','Нет переводчика':'Paused','Заморожен':'Stopped','Закончен':'Finished'}[status];
+}
+
+if(filters_map.length<2){
+    sload('https://remanga.org/_next/data/b_KopYsoe1Ea52hEFO4vj/ru/manga.json?content=manga').then((response){
+        if(response['status']==200){
+            final json=decode(response['body'])['pageProps']['fallbackData']['filters']['content'];
+            filters_map.addAll(json.keys.toMap((e)=>e,(e)=>json[e].toMap((e)=>e['name'],(e)=>e['id'])));
+        }
+    });
+}
