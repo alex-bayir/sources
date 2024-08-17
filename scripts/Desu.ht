@@ -111,7 +111,7 @@ fun similar(book) async {
             .selectAll('article.c-anime')
             .map((e)=>e.select('img'))
             .map((e)=>{
-                'id':num_parse(match(e.attributes['src'],'\\d+')),
+                'id':int.parse(match(e.attributes['src'],'\\d+')),
                 'url':"${host()}/manga/api/${match(e.attributes['src'],'\\d+')}",
                 'web':"${host()}/manga/${match(e.attributes['src'],'\\d+')}",
                 'names':[match(e.attributes['title'],'(.+) \\('),match(e.attributes['alt'],' \\((.+)\\)')],
