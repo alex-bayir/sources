@@ -51,7 +51,7 @@ fun branches(url:str) async {
                 'paid':e['is_paid'],
                 'bought':e['is_bought'],
                 'close':e['is_paid']
-            }));
+            }).reversed);
         }
         
         branches[branch['id']]={
