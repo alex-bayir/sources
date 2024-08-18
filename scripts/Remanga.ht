@@ -24,7 +24,7 @@ fun update(url:str) async {
         'names':([json['main_name'],json['secondary_name']]+json['another_name'].split(' / ')).toSet().toList(),
         'genres':json['genres'].map((e)=>e['name']).toList(),
         'tags':json['categories'].map((e)=>e['name']).toList(),
-        'rating':float.parse(json['avg_rating'])/2,
+        'rating':num.parse(json['avg_rating'])/2,
         'status':status(json['status']['name']),
         'description':json['description'],
         'cover':'${host()}${json['img']['high']}'
@@ -44,7 +44,7 @@ fun branches(url:str) async {
             chapters.addAll(decode(response['body'])['content'].map((e)=>{
                 'id':e['id'],
                 'vol':e['tome'],
-                'num':float.parse(e['chapter']),
+                'num':num.parse(e['chapter']),
                 'name':e['name'],
                 'date':timestamp(e['upload_date'],"yyyy-MM-dd'T'HH:mm:ss"),
                 'users':users,
@@ -110,7 +110,7 @@ fun query_url(url:str?,page:int?) async {
         'url':'${host()}/api/titles/${e['dir']}',
         'web':'https://${domain}/manga/${e['dir']}',
         'names':[e['rus_name'],e['en_name']],
-        'rating':float.parse(e['avg_rating']??'0.0')/2,
+        'rating':num.parse(e['avg_rating']??'0.0')/2,
         'cover':'${host()}${e['img']['high']}'
     });
 }
@@ -178,7 +178,7 @@ fun similar(book) async {
         'url':'${host()}/api/titles/${e['dir']}',
         'web':'https://${domain}/manga/${e['dir']}',
         'names':[e['rus_name'],e['en_name']],
-        'rating':float.parse(e['avg_rating']??'0.0')/2,
+        'rating':num.parse(e['avg_rating']??'0.0')/2,
         'cover':'${host()}${e['img']['high']}'
     });
 }
