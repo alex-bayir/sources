@@ -48,9 +48,7 @@ fun branches(url:str) async {
                 'name':e['name'],
                 'date':timestamp(e['upload_date'],"yyyy-MM-dd'T'HH:mm:ss"),
                 'users':users,
-                'paid':e['is_paid'],
-                'bought':e['is_bought'],
-                'close':e['is_paid']
+                'open':e['is_paid'] ? (e['is_bought'] ? null : timestamp(e['pub_date'],"yyyy-MM-dd'T'HH:mm:ss")) : null
             }).toList().reversed);
         }
         
