@@ -30,6 +30,7 @@ fun update(url:str) async {
         'cover':'${host()}${json['img']['high']}'
     }
 }
+
 fun branches(url:str) async {
     var response=await uload(url);
     assert(response['status']==200);

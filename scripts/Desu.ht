@@ -52,6 +52,8 @@ fun update(url:str) async {
     }
 }
 
+fun branches(url:str) async => null;
+
 fun query(name,page,filters) async {
     var url_params={'search':name,'page':(page??0)+1,'limit':100}
     if(filters!=null){
