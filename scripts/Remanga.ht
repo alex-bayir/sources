@@ -16,7 +16,7 @@ fun update(url:str) async {
     url=gsub(url,"https?:[\\/][\\/][^\\/]+",host());
     var response=await uload(url);
     assert(response['status']==200);
-    final json=decode(response['body'])['content'];
+    final json=decode(converting(response['body'],'iso-8859-1'))['content'];
     return {
         'id':json['id'],
         'url':url,
@@ -34,7 +34,7 @@ fun update(url:str) async {
 fun branches(url:str) async {
     var response=await uload(url);
     assert(response['status']==200);
-    final json=decode(response['body'])['content'];
+    final json=decode(converting(response['body'],'iso-8859-1'))['content'];
     final branches=Map();
     for(var branch in json['branches']){
         final chapters=[];
@@ -42,7 +42,7 @@ fun branches(url:str) async {
         for(var i=1;i<=(branch['count_chapters']/100.0).ceil();i++){
             response=await uload('${host()}/api/titles/chapters/?branch_id=${branch['id']}&count=100&page=${i}');
             assert(response['status']==200);
-            chapters.addAll(decode(response['body'])['content'].map((e)=>{
+            chapters.addAll(decode(converting(response['body'],'iso-8859-1'))['content'].map((e)=>{
                 'id':e['id'],
                 'vol':e['tome'],
                 'num':num.parse(e['chapter']),
@@ -104,7 +104,7 @@ fun query_url(url:str?,page:int?) async {
     print(url);
     final response=await uload(url);
     assert(response['status']==200);
-    return decode(response['body'])['content'].map((e)=>{
+    return decode(converting(response['body'],'iso-8859-1'))['content'].map((e)=>{
         'id':e['id'],
         'url':'${host()}/api/titles/${e['dir']}',
         'web':'https://${domain}/manga/${e['dir']}',
@@ -117,7 +117,7 @@ fun query_url(url:str?,page:int?) async {
 fun pages(url,branch,chapter) async {
     final response=await uload(gsub(url,'[^/]+$','chapters/${chapter['id']}'));
     assert(response['status']==200);
-    return decode(response['body'])['content']['pages'].expand((e)=>(e is List) ? e.map((e)=>e['link']).toList() : [e['link']]).toList();
+    return decode(converting(response['body'],'iso-8859-1'))['content']['pages'].expand((e)=>(e is List) ? e.map((e)=>e['link']).toList() : [e['link']]).toList();
 }
 
 fun filters()=>{
@@ -172,7 +172,7 @@ fun filters()=>{
 fun similar(book) async {
     final response=await uload('${book['url']}/similar');
     assert(response['status']==200);
-    return decode(response['body'])['content'].map((e)=>e['title']).map((e)=>{
+    return decode(converting(response['body'],'iso-8859-1'))['content'].map((e)=>e['title']).map((e)=>{
         'id':e['id'],
         'url':'${host()}/api/titles/${e['dir']}',
         'web':'https://${domain}/manga/${e['dir']}',
@@ -189,7 +189,7 @@ fun status(status){
 if(filters_map.length<2){
     sload('https://remanga.org/_next/data/b_KopYsoe1Ea52hEFO4vj/ru/manga.json?content=manga').then((response){
         if(response['status']==200){
-            final json=decode(response['body'])['pageProps']['fallbackData']['filters']['content'];
+            final json=decode(converting(response['body'],'iso-8859-1'))['pageProps']['fallbackData']['filters']['content'];
             filters_map.addAll(json.keys.toMap((e)=>e,(e)=>json[e].toMap((e)=>e['name'],(e)=>e['id'])));
         }
     });
