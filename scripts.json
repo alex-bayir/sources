@@ -53,5 +53,16 @@
         "source":"https://v1.hentailib.org",
         "url":"https://raw.githubusercontent.com/alex-bayir/sources/main/scripts/HentaiLib.ht",
         "policy":"18+"
+    },
+    {
+        "name":"MangaReader",
+        "ico":"https://mangareader.to/images/apple-touch-icon.png",
+        "version": "1.0",
+        "status":"ok",
+        "types":["Manga","Manhwa"],
+        "languages":["EN","JA","KO","ZH","FR"],
+        "source":"https://mangareader.to",
+        "url":"https://raw.githubusercontent.com/alex-bayir/sources/main/scripts/MangaReader.ht",
+        "policy":"16+"
     }
 ]

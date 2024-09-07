@@ -1,0 +1,150 @@
+import 'imports.ht'
+
+final version="1.0"
+final domains=["mangareader.to"]
+var domain=domains[0]
+final source="MangaReader"
+final types="Manga/Manhwa"
+final description="Один из источников манги на которые раньше всего заливают главы."
+fun host()=>'https://${domain}';
+fun icon()=>'${host()}/favicon.ico';
+final auth_tokens={};
+
+final filters_map={
+    "sorts":{"Default":"default","Latest Updated":"latest-updated","Score":"score","Name A-Z":"name-az","Release Date":"release-date","Most Viewed":"most-viewed"},
+    "status":{"All":"","Finished":"1","Publishing":"2","On Hiatus":"3","Discontinued":"4","Not yet published":"5"},
+    "score":{"All":"","(1) Appalling":"1","(2) Horrible":"2","(3) Very Bad":"3","(4) Bad":"4","(5) Average":"5","(6) Fine":"6","(7) Good":"7","(8) Very Good":"8","(9) Great":"9","(10) Masterpiece":"10"},
+    "types":{"All":"","Manga":"1","One-shot":"2","Doujinshi":"3","Light Novel":"4","Manhwa":"5","Manhua":"6","Comic":"8"},
+    "languages":{"All":"","English":"en","Japanese":"ja","Korean":"ko","Chinese":"zh"},
+    "rating_type":{"All":"","G - All Ages":"1","PG - Children":"2","PG-13 - Teens 13 or older":"3","R - 17+ (violence & profanity)":"4","R+ - Mild Nudity":"5","Rx - Hentai":"6"},
+    "genres":{"Action":"1","Adventure":"2","Cars":"3","Comedy":"4","Dementia":"5","Demons":"6","Doujinshi":"7","Drama":"8","Ecchi":"9","Fantasy":"10","Game":"11","Gender Bender":"12","Harem":"13","Hentai":"14","Historical":"15","Horror":"16","Josei":"17","Kids":"18","Magic":"19","Martial Arts":"20","Mecha":"21","Military":"22","Music":"23","Mystery":"24","Parody":"25","Police":"26","Psychological":"27","Romance":"28","Samurai":"29","School":"30","Sci-Fi":"31","Seinen":"32","Shoujo":"33","Shoujo Ai":"34","Shounen":"35","Shounen Ai":"36","Slice of Life":"37","Space":"38","Sports":"39","Super Power":"40","Supernatural":"41","Thriller":"42","Vampire":"43","Yaoi":"44","Yuri":"45"}
+};
+
+fun update(url:str) async {
+    var response=await sload(url);
+    assert(response['status']==200);
+    final document=Document.parse(response['body']);
+    final container=document.select('div.ani_detail-stage');
+    final chapters=document.selectAll('ul.lang-chapters');
+    return {
+        'id':int.parse(match(url,'/.+-(\d+)$',1)),
+        'url':url,
+        'web':url,
+        'names':container.selectAll('[class^=manga-name]').map((e)=>e.text).toList(),
+        'genres':container.selectAll('a[href*=genre]').map((e)=>e.attr('href').replaceAll('/genre/','')).toList(),
+        'authors':container.selectAll('a[href*=author]').toMap((e)=>e.text,(e)=>host()+e.attr('href')).jsonify(),
+        'status':status(container.select('div.anisc-info').select('div.item-title:contains(Status)')?.select('span.name').text),
+        'rating':float.parse(container.select('div.anisc-info').select('div.item-title:contains(Score)')?.select('span.name').text),
+        'description':container.select('div.description')?.text.trim(),
+        'cover':container.select('img.manga-poster-img')?.attr('src'),
+        'branches':chapters.toMap((e)=>e.id.replaceAll('-chapters',''),(e)=>{
+            'id':e.id.replaceAll('-chapters',''),
+            'name':e.id.replaceAll('-chapters','').toUpperCase(),
+            'chapters':e.selectAll('li.chapter-item').map((e)=>{
+                'num':num.parse(e.attr('data-number')),
+                'name':e.select('a').attr('title').replaceAll('Chapter ${e.attr('data-number')}: ','')
+            }).toList()
+        }).jsonify(),
+        'similar':document.selectAll('li.item-top').map((e)=>{
+            'id':int.parse(match(e.select('a').attr('href'),'/.+-(\d+)$',1)),
+            'url':host()+e.select('a').attr('href'),
+            'web':host()+e.select('a').attr('href'),
+            'names':e.selectAll('h3').map((e)=>e.text).toList(),
+            'cover':e.select('img')?.attr('src')
+        })
+    };
+}
+
+fun branches(url:str) async => null;
+
+fun query(name:str?,page:int?,filters) async {
+    if(find(name,'[a-z]://[^ >,;]*')){
+        return await query_url(name,page);
+    }else if(name?.isNotEmpty ?? false){
+        return await query_url(url('${host()}/search',{'keyword':name,'page':page!=null ? page+1 : 1}));
+    }else if(filters!=null){
+        var empty=(string)=>string==null || string=='' ? null:string;
+        var url_params={'page':page+1};
+        if(filters['sort']!=null){url_params['sort']=empty(filters['sort']['selected']);}
+        if(filters['score']!=null){url_params['score']=empty(filters['score']['selected']);}
+        if(filters['type']!=null){url_params['type']=empty(filters['type']['selected']);}
+        if(filters['status']!=null){url_params['status']=empty(filters['status']['selected']);}
+        if(filters['language']!=null){url_params['language']=empty(filters['language']['selected']);}
+        if(filters['rating_type']!=null){url_params['rating_type']=empty(filters['rating_type']['selected']);}
+        return await query_url(url('${host()}/filter',url_params),null);
+    }
+}
+
+fun query_url(url:str,page:int?) async {
+    if(page!=null && page>0){
+        url=url.contains('page=') ? gsub(url,'page=\d+','page=${page+1}') : '${url}&page=${page+1}';
+    }
+    print(url);
+    var response=await sload(url);
+    assert(response['status']==200);
+    return Document.parse(response['body']).selectAll('div.item-spc').map((e)=>{
+        'id':int.parse(match(e.select('a').attr('href'),'/.+-(\d+)$',1)),
+        'url':host()+e.select('a').attr('href'),
+        'web':host()+e.select('a').attr('href'),
+        'names':e.selectAll('h3').map((e)=>e.text).toList(),
+        'cover':e.select('img')?.attr('src')
+    });
+}
+
+fun pages(url,branch,chapter) async {
+    final slug=match(url,'[^/]+$');
+    var response=await sload("${host()}/read/${slug}/${branch['id']}/chapter-${chapter['num']}");
+    if(response['status']==200){
+        final info=Document.parse(response['body']).select('div#wrapper');
+        response=await sload('${host()}/ajax/image/list/${info.attr('data-reading-by')}/${info.attr('data-reading-id')}');
+        if(response['status']==200){
+            return Document.parse(decode(response['body'])['html']).selectAll('div.iv-card').map((e)=>e.attr('data-url')).toList();
+        }else{
+            log(encode(response));
+            return null;
+        }
+    }else{
+        log(encode(response));
+        return null;
+    }
+}
+
+fun filters()=>{
+    'sort':{
+        'title':'Сортировка',
+        'mode':'single',
+        'values': filters_map['sorts']
+    },
+    'status':{
+        'title':'Статус',
+        'mode':'single',
+        'values': filters_map['status']
+    },
+    'score':{
+        'title':'Оценка',
+        'mode':'single',
+        'values': filters_map['score']
+    },
+    'types':{
+        'title':'Типы',
+        'mode':'single',
+        'values': filters_map['types']
+    },
+    'languages':{
+        'title':'Languages',
+        'mode':'double',
+        'values': filters_map['languages']
+    },
+    'rating_type':{
+        'title':'Возрастное ограничение',
+        'mode':'single',
+        'values': filters_map['rating_type']
+    },
+    'genres':{
+        'title':'Жанры',
+        'mode':'double',
+        'values': filters_map['genres']
+    }
+};
+
+fun status(status)=>{'Not yet published':'Announce','Publishing':'Ongoing','On Hiatus':'Paused','Discontinued':'Stopped','Finished':'Finished'}[status]
