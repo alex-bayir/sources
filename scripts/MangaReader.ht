@@ -137,6 +137,11 @@ fun filters()=>{
         'mode':'single',
         'values': filters_map['status']
     },
+    'release':{
+        'title':'Год выпуска',
+        'mode':'range',
+        'format':'dd.mm.yyyy'
+    },
     'score':{
         'title':'Оценка',
         'mode':'single',
@@ -161,11 +166,6 @@ fun filters()=>{
         'title':'Жанры',
         'mode':'double',
         'values': filters_map['genres']
-    },
-    'release':{
-        'title':'Год выпуска',
-        'mode':'range',
-        'format':'dd.mm.yyyy'
     }
 };
 
