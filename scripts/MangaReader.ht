@@ -31,7 +31,7 @@ fun update(url:str) async {
         'url':url,
         'web':url,
         'names':container.selectAll('[class^=manga-name]').map((e)=>e.text).toList(),
-        'genres':container.selectAll('a[href*=genre]').map((e)=>e.attr('href').replaceAll('/genre/','')).toList(),
+        'genres':container.selectAll('a[href*=genre]').map((e)=>e.text).toList(),
         'authors':container.selectAll('a[href*=author]').toMap((e)=>e.text,(e)=>host()+e.attr('href')).jsonify(),
         'status':status(container.select('div.anisc-info').select('div.item-title:contains(Status)')?.select('span.name').text),
         'rating':float.parse(container.select('div.anisc-info').select('div.item-title:contains(Score)')?.select('span.name').text),
@@ -50,6 +50,7 @@ fun update(url:str) async {
             'url':host()+e.select('a').attr('href'),
             'web':host()+e.select('a').attr('href'),
             'names':e.selectAll('h3').map((e)=>e.text).toList(),
+            'genres':e.selectAll('a[href*=genre]').map((e)=>e.text).toList(),
             'cover':e.select('img')?.attr('src')
         })
     };
@@ -69,8 +70,23 @@ fun query(name:str?,page:int?,filters) async {
         if(filters['score']!=null){url_params['score']=empty(filters['score']['selected']);}
         if(filters['type']!=null){url_params['type']=empty(filters['type']['selected']);}
         if(filters['status']!=null){url_params['status']=empty(filters['status']['selected']);}
-        if(filters['language']!=null){url_params['language']=empty(filters['language']['selected']);}
+        if(filters['language']!=null){url_params['language']=empty(filters['language']['selected'].join(','));}
         if(filters['rating_type']!=null){url_params['rating_type']=empty(filters['rating_type']['selected']);}
+        if(filters['genres']!=null){url_params['genres']=empty(filters['genres']['selected'].join(','));}
+        if(filters['release']!=null){
+            var values=filters['release']['start']?.split('.');
+            if((values?.length??0)==3){
+                url_params['sd']=values[0];
+                url_params['sm']=values[1];
+                url_params['sy']=values[2];
+            }
+            values=filters['release']['end']?.split('.');
+            if((values?.length??0)==3){
+                url_params['ed']=values[0];
+                url_params['em']=values[1];
+                url_params['ey']=values[2];
+            }
+        }
         return await query_url(url('${host()}/filter',url_params),null);
     }
 }
@@ -82,11 +98,12 @@ fun query_url(url:str,page:int?) async {
     print(url);
     var response=await sload(url);
     assert(response['status']==200);
-    return Document.parse(response['body']).selectAll('div.item-spc').map((e)=>{
+    return Document.parse(response['body']).selectAll('div.item-spc,div.manga_list-wrap>div.item').map((e)=>{
         'id':int.parse(match(e.select('a').attr('href'),'/.+-(\d+)$',1)),
         'url':host()+e.select('a').attr('href'),
         'web':host()+e.select('a').attr('href'),
-        'names':e.selectAll('h3').map((e)=>e.text).toList(),
+        'names':e.selectAll('h3 > a').map((e)=>e.text).toList(),
+        'genres':e.selectAll('a[href*=genre]').map((e)=>e.text).toList(),
         'cover':e.select('img')?.attr('src')
     });
 }
@@ -144,6 +161,11 @@ fun filters()=>{
         'title':'Жанры',
         'mode':'double',
         'values': filters_map['genres']
+    },
+    'release':{
+        'title':'Год выпуска',
+        'mode':'range',
+        'format':'dd.mm.yyyy'
     }
 };
 
