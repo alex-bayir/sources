@@ -24,7 +24,7 @@ fun update(url:str) async {
         'names':([json['main_name'],json['secondary_name']]+json['another_name'].split(' / ')).toSet().toList(),
         'genres':json['genres'].map((e)=>e['name']).toList(),
         'tags':json['categories'].map((e)=>e['name']).toList(),
-        'rating':num.parse(json['avg_rating'])/2,
+        'rating':json['avg_rating']/2,
         'status':status(json['status']['name']),
         'description':json['description'],
         'cover':'${host()}${json['img']['high']}'
