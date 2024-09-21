@@ -105,25 +105,25 @@ fun query(name:str?,page:int?,filters) async {
             url_params['rating_max']=empty(filters['rating']['end']);
         }
         if(filters['genres']!=null){
-            url_params[filters['genres']['selected'].map((e)=>'genres[]=${e}').join('&')]='';
-            url_params[filters['genres']['deselected'].map((e)=>'genres_exclude[]=${e}').join('&')]='';
+            url_params['genres[]']=filters['genres']['selected'];
+            url_params['genres_exclude[]']=filters['genres']['deselected'];
         }
         if(filters['tags']!=null){
-            url_params[filters['tags']['selected'].map((e)=>'tags[]=${e}').join('&')]='';
-            url_params[filters['tags']['deselected'].map((e)=>'tags_exclude[]=${e}').join('&')]='';
+            url_params['tags[]']=filters['tags']['selected'];
+            url_params['tags_exclude[]']=filters['tags']['deselected'];
         }
         if(filters['series']!=null){
-            url_params[filters['series']['selected'].map((e)=>'series[]=${e}').join('&')]='';
+            url_params['series[]']=filters['series']['selected'];
         }
         if(filters['types']!=null){
-            url_params[filters['types']['selected'].map((e)=>'types[]=${e}').join('&')]='';
+            url_params['types[]']=filters['types']['selected'];
         }
         if(filters['statuses']!=null){
-            url_params[filters['statuses']['selected'].map((e)=>'status[]=${e}').join('&')]='';
+            url_params['status[]']=filters['statuses']['selected'];
         }
         if(filters['formats']!=null){
-            url_params[filters['formats']['selected'].map((e)=>'format[]=${e}').join('&')]='';
-            url_params[filters['formats']['deselected'].map((e)=>'format_exclude[]=${e}').join('&')]='';
+            url_params['format[]']=filters['formats']['selected'];
+            url_params['format_exclude[]']=filters['formats']['deselected'];
         }
         url_params['']=null;
         return await query_url(url('${api()}/api/manga',url_params),null)

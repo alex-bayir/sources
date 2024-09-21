@@ -62,9 +62,8 @@ fun branches(url:str) async {
 }
 
 fun query(name:str?,page:int?,filters) async {
-    var empty=(string)=>string==null || string=='' ? null:string;
-    final u=url('${host()}/api/search${empty(name)!=null ? '/' : '/catalog/'}',{'query':empty(name),'page':page+1});
-    var url_params={};
+    final empty=(string)=>string==null || string=='' ? null:string;
+    final url_params={'query':empty(name),'page':page+1};
     if(filters!=null){
         if(filters['sort']!=null){
             url_params['ordering']=filters['sort']['selected'];
@@ -94,7 +93,7 @@ fun query(name:str?,page:int?,filters) async {
             url_params['additional']=empty(filters['additional']['selected']);
         }
     }
-    return await query_url(url(u,url_params),null)
+    return await query_url(url('${host()}/api/search${empty(name)!=null ? '/' : '/catalog/'}',url_params),null)
 }
 
 fun query_url(url:str?,page:int?) async {
