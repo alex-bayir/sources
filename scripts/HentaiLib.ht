@@ -243,21 +243,24 @@ fun parse_books(json)=>json.map((e)=>e['media'] ?? e).map((e)=>{
 }).toList();
 
 fun safe_params(uri:str,params)=>raw(url(uri,params));
-if(filters_map.length<8){
-    sload('${api()}/api/constants?fields[]=genres&fields[]=tags&fields[]=types&fields[]=scanlateStatus&fields[]=status&fields[]=format&fields[]=ageRestriction&fields[]=imageServers').then((response){
-        if(response['status']==200){
-            var json=decode(unescape(response['body']))['data'];
-            servers=json['imageServers'].where((e)=>e['site_ids'].contains(site)).toMap((e)=>e['id'],(e)=>e['url']);
-            filters_map['genres']=json['genres'].where((e)=>e['site_ids'].contains(site)).toMap((e)=>e['name'],(e)=>e['id']).jsonify();
-            filters_map['tags']=json['tags'].where((e)=>e['site_ids'].contains(site)).toMap((e)=>e['name'],(e)=>e['id']).jsonify();
-            filters_map['types']=json['types'].where((e)=>e['site_ids'].contains(site)).toMap((e)=>e['label'],(e)=>e['id']).jsonify();
-            filters_map['statuses']=json['status'].where((e)=>e['site_ids'].contains(site)).toMap((e)=>e['label'],(e)=>e['id']).jsonify();
-            filters_map['scanlates']=json['scanlateStatus'].where((e)=>e['site_ids'].contains(site)).toMap((e)=>e['label'],(e)=>e['id']).jsonify();
-            filters_map['formats']=json['format'].where((e)=>e['site_ids'].contains(site)).toMap((e)=>e['name'],(e)=>e['id']).jsonify();
-            filters_map['restrictions']=json['ageRestriction'].where((e)=>e['site_ids'].contains(site)).toMap((e)=>e['label'],(e)=>e['id']).jsonify();
-        }else{
-            log(encode(response));
-            return null;
-        }
-    });
+
+fun categories() async {
+    if(filters_map.length<8){
+        var response=await sload('${api()}/api/constants?fields[]=genres&fields[]=tags&fields[]=types&fields[]=scanlateStatus&fields[]=status&fields[]=format&fields[]=ageRestriction&fields[]=imageServers')
+        assert(response['status']==200);
+        var json=decode(unescape(response['body']))['data'];
+        servers=json['imageServers'].where((e)=>e['site_ids'].contains(site)).toMap((e)=>e['id'],(e)=>e['url']);
+        filters_map['genres']=json['genres'].where((e)=>e['site_ids'].contains(site)).toMap((e)=>e['name'],(e)=>e['id']).jsonify();
+        filters_map['tags']=json['tags'].where((e)=>e['site_ids'].contains(site)).toMap((e)=>e['name'],(e)=>e['id']).jsonify();
+        filters_map['types']=json['types'].where((e)=>e['site_ids'].contains(site)).toMap((e)=>e['label'],(e)=>e['id']).jsonify();
+        filters_map['statuses']=json['status'].where((e)=>e['site_ids'].contains(site)).toMap((e)=>e['label'],(e)=>e['id']).jsonify();
+        filters_map['scanlates']=json['scanlateStatus'].where((e)=>e['site_ids'].contains(site)).toMap((e)=>e['label'],(e)=>e['id']).jsonify();
+        filters_map['formats']=json['format'].where((e)=>e['site_ids'].contains(site)).toMap((e)=>e['name'],(e)=>e['id']).jsonify();
+        filters_map['restrictions']=json['ageRestriction'].where((e)=>e['site_ids'].contains(site)).toMap((e)=>e['label'],(e)=>e['id']).jsonify();
+        return true;
+    }else{
+        return true;
+    }
 }
+
+categories();

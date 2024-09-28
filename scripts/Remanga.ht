@@ -185,11 +185,16 @@ fun status(status){
     return {'Анонс':'Announce','Продолжается':'Ongoing','Нет переводчика':'Paused','Заморожен':'Stopped','Закончен':'Finished'}[status];
 }
 
-if(filters_map.length<2){
-    sload('https://remanga.org/_next/data/b_KopYsoe1Ea52hEFO4vj/ru/manga.json?content=manga').then((response){
-        if(response['status']==200){
-            final json=decode(converting(response['body'],'iso-8859-1'))['pageProps']['fallbackData']['filters']['content'];
-            filters_map.addAll(json.keys.toMap((e)=>e,(e)=>json[e].toMap((e)=>e['name'],(e)=>e['id'])));
-        }
-    });
+fun categories() async {
+    if(filters_map.length<2){
+        var response = await sload('https://remanga.org/_next/data/b_KopYsoe1Ea52hEFO4vj/ru/manga.json?content=manga')
+        assert(response['status']==200);
+        final json=decode(converting(response['body'],'iso-8859-1'))['pageProps']['fallbackData']['filters']['content'];
+        filters_map.addAll(json.keys.toMap((e)=>e,(e)=>json[e].toMap((e)=>e['name'],(e)=>e['id'])));
+        return true;
+    }else{
+        return true;
+    }
 }
+
+categories();

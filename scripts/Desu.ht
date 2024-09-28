@@ -128,3 +128,5 @@ fun similar(book) async {
 fun status(status){
     return {'released':'Ongoing','ongoing':'Ongoing','continued':'Ongoing','Заморожен':'Stopped','completed':'Finished'}[status]
 }
+
+fun categories()=>true;
