@@ -193,7 +193,7 @@ fun categories() async {
         filters_map.addAll(json.keys.toMap((e)=>e,(e)=>json[e].toMap((e)=>e['name'],(e)=>e['id'])));
         return true;
     }else{
-        return true;
+        return false;
     }
 }
 

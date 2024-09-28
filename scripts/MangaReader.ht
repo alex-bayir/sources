@@ -171,4 +171,4 @@ fun filters()=>{
 
 fun status(status)=>{'Not yet published':'Announce','Publishing':'Ongoing','On Hiatus':'Paused','Discontinued':'Stopped','Finished':'Finished'}[status]
 
-fun categories()=>true;
+fun categories()=>false;

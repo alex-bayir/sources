@@ -259,7 +259,7 @@ fun categories() async {
         filters_map['restrictions']=json['ageRestriction'].where((e)=>e['site_ids'].contains(site)).toMap((e)=>e['label'],(e)=>e['id']).jsonify();
         return true;
     }else{
-        return true;
+        return false;
     }
 }
 
