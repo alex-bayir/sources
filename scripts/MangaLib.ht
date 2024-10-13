@@ -1,7 +1,7 @@
 import 'imports.ht'
 
 final version='1.0';
-final domains=['test-front.mangalib.me'];
+final domains=['test-front.mangalib.me','mangalib.me'];
 var domain=domains[0];
 final source='MangaLib';
 final types='Manga/Manhwa';
