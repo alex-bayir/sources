@@ -146,6 +146,8 @@ fun query_url(url:str,page:int?) async {
             log(encode(response));
             return null;
         }
+    }else{
+        return await query_url('${api()}/api/manga/${match(url,'https?://[^/]+/([^?]+)')}');
     }
 }
 
@@ -229,18 +231,20 @@ fun similar(book) async {
 
 fun status(status:str) => {'3':'Announce','1':'Ongoing','4':'Paused','5':'Stopped','2':'Finished'}[status];
 
-fun parse_books(json)=>json.map((e)=>e['media'] ?? e).map((e)=>{
-    'id':e['id'],
-    'slug':e['slug'],
-    'url':'${api()}/api/manga/${e['slug']}',
-    'web':'${host()}/ru/manga/${e['slug']}',
-    'names':[e['name'],e['rus_name'],e['eng_name']],
-    'rating':num.parse(e['rating']?['average'] ?? '0')/2,
-    'status':status(e['status']['id'].toString()),
-    'type':e['model'],
-    'restrictions':e['ageRestriction']?['label'],
-    'cover':e['cover']['default']
-}).toList();
+fun parse_books(json)=>(json is Iterable) ? (json.map((e)=>e['media'] ?? e).map(parse_book).toList()) : ([parse_book(json)]);
+
+fun parse_book(json)=>{
+    'id':json['id'],
+    'slug':json['slug'],
+    'url':'${api()}/api/manga/${json['slug']}',
+    'web':'${host()}/ru/manga/${json['slug']}',
+    'names':[json['name'],json['rus_name'],json['eng_name']],
+    'rating':num.parse(json['rating']?['average'] ?? '0')/2,
+    'status':status(json['status']['id'].toString()),
+    'type':json['model'],
+    'restrictions':json['ageRestriction']?['label'],
+    'cover':json['cover']['default']
+};
 
 fun safe_params(uri:str,params)=>raw(url(uri,params));
 
