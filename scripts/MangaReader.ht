@@ -59,7 +59,7 @@ fun update(url:str) async {
 fun branches(url:str) async => null;
 
 fun query(name:str?,page:int?,filters) async {
-    if(find(name,'[a-z]://[^ >,;]*')){
+    if(find(name,'[a-z]+://[^ >,;]*')){
         return await query_url(name,page);
     }else if(name?.isNotEmpty ?? false){
         return await query_url(url('${host()}/search',{'keyword':name,'page':page!=null ? page+1 : 1}));
@@ -95,17 +95,23 @@ fun query_url(url:str,page:int?) async {
     if(page!=null && page>0){
         url=url.contains('page=') ? gsub(url,'page=\d+','page=${page+1}') : '${url}&page=${page+1}';
     }
-    print(url);
     var response=await sload(url);
     assert(response['status']==200);
-    return Document.parse(response['body']).selectAll('div.item-spc,div.manga_list-wrap>div.item').map((e)=>{
-        'id':int.parse(match(e.select('a').attr('href'),'/.+-(\d+)$',1)),
-        'url':host()+e.select('a').attr('href'),
-        'web':host()+e.select('a').attr('href'),
-        'names':e.selectAll('h3 > a').map((e)=>e.text).toList(),
-        'genres':e.selectAll('a[href*=genre]').map((e)=>e.text).toList(),
-        'cover':e.select('img')?.attr('src')
-    });
+    if(find(url,'^${host()}/[a-zA-Z-]+\\d+$')){
+        return Document.parse(response['body']).selectAll('body').map((e)=>{
+            'id':int.parse(match(url,'/.+-(\d+)$',1)),
+            'url':url
+        });
+    }else{
+        return Document.parse(response['body']).selectAll('div.item-spc,div.manga_list-wrap>div.item').map((e)=>{
+            'id':int.parse(match(e.select('a').attr('href'),'/.+-(\d+)$',1)),
+            'url':host()+e.select('a').attr('href'),
+            'web':host()+e.select('a').attr('href'),
+            'names':e.selectAll('h3 > a').map((e)=>e.text).toList(),
+            'genres':e.selectAll('a[href*=genre]').map((e)=>e.text).toList(),
+            'cover':e.select('img')?.attr('src')
+        });
+    }
 }
 
 fun pages(url,branch,chapter) async {
