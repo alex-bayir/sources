@@ -100,17 +100,13 @@ fun query_url(url:str?,page:int?) async {
     if(page!=null){
         url=url.contains('page=') ? gsub(url,'page=\d+','page=${page+1}') : '${url}&page=${page+1}';
     }
-    print(url);
+    if(find(url,'manga/(.+)')){
+        url='${host()}/api/titles/${match(url,'manga/(.+)')}'
+    }
+    
     final response=await uload(url);
     assert(response['status']==200);
-    return decode(converting(response['body'],'iso-8859-1'))['content'].map((e)=>{
-        'id':e['id'],
-        'url':'${host()}/api/titles/${e['dir']}',
-        'web':'https://${domain}/manga/${e['dir']}',
-        'names':[e['rus_name'],e['en_name']],
-        'rating':num.parse(e['avg_rating']??'0.0')/2,
-        'cover':'${host()}${e['img']['high']}'
-    });
+    return parse_books(decode(converting(response['body'],'iso-8859-1'))['content']);
 }
 
 fun pages(url,branch,chapter) async {
@@ -184,6 +180,17 @@ fun similar(book) async {
 fun status(status){
     return {'Анонс':'Announce','Продолжается':'Ongoing','Нет переводчика':'Paused','Заморожен':'Stopped','Закончен':'Finished'}[status];
 }
+
+fun parse_books(json)=>(json is Iterable) ? (json.map(parse_book).toList()) : ([parse_book(json)]);
+
+fun parse_book(json)=>{
+    'id':json['id'],
+    'url':'${host()}/api/titles/${json['dir']}',
+    'web':'https://${domain}/manga/${json['dir']}',
+    'names':[json['rus_name'],json['en_name']],
+    'rating':num.parse(json['avg_rating']??'0.0')/2,
+    'cover':'${host()}${json['img']['high']}'
+};
 
 fun categories() async {
     if(filters_map.length<2){
